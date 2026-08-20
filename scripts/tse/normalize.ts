@@ -60,10 +60,13 @@ function sourceGeneratedAt(date: string, time: string): string {
 function assertGeneration(
   expected: string,
   row: Pick<TseCandidateRow, "generatedDate" | "generatedTime">,
+  resource: "principal" | "complementar",
 ): void {
   const current = sourceGeneratedAt(row.generatedDate, row.generatedTime);
   if (current !== expected) {
-    throw new Error(`O pacote mistura extrações TSE (${expected} e ${current}).`);
+    throw new Error(
+      `O arquivo ${resource} mistura extrações TSE (${expected} e ${current}).`,
+    );
   }
 }
 
@@ -104,9 +107,16 @@ function jurisdictionFor(
 
 function indexSupplements(
   rows: readonly TseCandidateSupplementRow[],
+  generatedAt: string,
 ): ReadonlyMap<string, TseCandidateSupplementRow> {
   const bySequence = new Map<string, TseCandidateSupplementRow>();
   for (const row of rows) {
+    assertGeneration(generatedAt, row, "complementar");
+    if (row.electionYear !== String(TSE_2026.electionYear)) {
+      throw new Error(
+        `Ano eleitoral inesperado no registro complementar ${row.sequenceId}: ${row.electionYear}.`,
+      );
+    }
     requiredDigits(row.sequenceId, "SQ_CANDIDATO complementar");
     if (bySequence.has(row.sequenceId)) {
       throw new Error(`SQ_CANDIDATO duplicado no arquivo complementar: ${row.sequenceId}.`);
@@ -122,26 +132,30 @@ export function normalizeTseCandidates(
   photos: PhotoIndex,
 ): NormalizationResult {
   if (candidateRows.length === 0) throw new Error("O CSV de candidaturas está vazio.");
-  if (candidateRows.length !== supplementRows.length) {
-    throw new Error(
-      `Arquivos principal e complementar divergem: ${candidateRows.length} / ${supplementRows.length} linhas.`,
-    );
-  }
+  if (supplementRows.length === 0) throw new Error("O CSV complementar está vazio.");
 
-  const supplements = indexSupplements(supplementRows);
+  const candidateGeneratedAt = sourceGeneratedAt(
+    candidateRows[0]?.generatedDate ?? "",
+    candidateRows[0]?.generatedTime ?? "",
+  );
+  const supplementGeneratedAt = sourceGeneratedAt(
+    supplementRows[0]?.generatedDate ?? "",
+    supplementRows[0]?.generatedTime ?? "",
+  );
+  const generatedAt =
+    candidateGeneratedAt <= supplementGeneratedAt
+      ? candidateGeneratedAt
+      : supplementGeneratedAt;
+  const supplements = indexSupplements(supplementRows, supplementGeneratedAt);
   const seen = new Set<string>();
   const candidates = [];
   const ignoredOfficeCounts: Record<string, number> = {};
   const sourceStatusCounts: Record<string, number> = {};
   const internalStatusCounts: Record<string, number> = {};
   let missingPhotoCount = 0;
-  const generatedAt = sourceGeneratedAt(
-    candidateRows[0]?.generatedDate ?? "",
-    candidateRows[0]?.generatedTime ?? "",
-  );
 
   for (const row of candidateRows) {
-    assertGeneration(generatedAt, row);
+    assertGeneration(candidateGeneratedAt, row, "principal");
     if (row.electionYear !== String(TSE_2026.electionYear)) {
       throw new Error(`Ano eleitoral inesperado em ${row.sequenceId}: ${row.electionYear}.`);
     }
@@ -155,7 +169,6 @@ export function normalizeTseCandidates(
     if (!supplement) {
       throw new Error(`Não há registro complementar para SQ_CANDIDATO ${row.sequenceId}.`);
     }
-    assertGeneration(generatedAt, supplement);
     if (supplement.electionYear !== row.electionYear) {
       throw new Error(`Ano divergente no registro complementar ${row.sequenceId}.`);
     }
@@ -206,11 +219,9 @@ export function normalizeTseCandidates(
     candidates.push(validation.value);
   }
 
-  for (const sequenceId of supplements.keys()) {
-    if (!seen.has(sequenceId)) {
-      throw new Error(`Registro complementar sem candidatura principal: ${sequenceId}.`);
-    }
-  }
+  const supplementOnlyCount = [...supplements.keys()].filter(
+    (sequenceId) => !seen.has(sequenceId),
+  ).length;
 
   candidates.sort((left, right) => {
     const partitionLeft = left.jurisdiction.scope === "NATIONAL" ? "BR" : left.jurisdiction.uf;
@@ -227,6 +238,9 @@ export function normalizeTseCandidates(
   return {
     candidates,
     sourceGeneratedAt: generatedAt,
+    candidateGeneratedAt,
+    supplementGeneratedAt,
+    supplementOnlyCount,
     rawCandidateCount: candidateRows.length,
     ignoredOfficeCounts,
     sourceStatusCounts,

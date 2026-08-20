@@ -33,6 +33,7 @@ function supplement(
   sequenceId: string,
   code = "8",
   description = "AGUARDANDO JULGAMENTO",
+  overrides: Partial<TseCandidateSupplementRow> = {},
 ): TseCandidateSupplementRow {
   return {
     generatedDate: "17/08/2026",
@@ -41,6 +42,7 @@ function supplement(
     sequenceId,
     judgmentStatusCode: code,
     judgmentStatusDescription: description,
+    ...overrides,
   };
 }
 
@@ -95,6 +97,7 @@ describe("normalização TSE → modelo interno", () => {
     );
 
     expect(result.candidates).toHaveLength(3);
+    expect(result.supplementOnlyCount).toBe(0);
     expect(result.candidates.find(({ office }) => office === ELECTORAL_OFFICE.PRESIDENT)).toMatchObject({
       id: "280002552487",
       jurisdiction: { scope: TERRITORIAL_SCOPE.NATIONAL },
@@ -127,9 +130,13 @@ describe("normalização TSE → modelo interno", () => {
   });
 
   it("rejeita dados incompletos, situação desconhecida e cargo territorial inválido", () => {
-    expect(() => normalizeTseCandidates([candidate({ sequenceId: "1" })], [], new Map())).toThrow(
-      /divergem/,
-    );
+    expect(() =>
+      normalizeTseCandidates(
+        [candidate({ sequenceId: "1" })],
+        [supplement("2")],
+        new Map(),
+      ),
+    ).toThrow(/Não há registro complementar para SQ_CANDIDATO 1/);
     expect(() =>
       normalizeTseCandidates(
         [candidate({ sequenceId: "1" })],
@@ -187,5 +194,71 @@ describe("normalização TSE → modelo interno", () => {
       CANDIDATE_STATUS.PENDING_OR_AMBIGUOUS,
       CANDIDATE_STATUS.NOT_DISPLAYABLE,
     ]);
+  });
+
+  it("aceita complemento como superset, ignora extras e mantém o principal autoritativo", () => {
+    const result = normalizeTseCandidates(
+      [candidate({ sequenceId: "1" }), candidate({ sequenceId: "2" })],
+      [supplement("1"), supplement("2"), supplement("3")],
+      new Map(),
+    );
+
+    expect(result.rawCandidateCount).toBe(2);
+    expect(result.candidates).toHaveLength(2);
+    expect(result.candidates.map(({ id }) => id)).toEqual(["1", "2"]);
+    expect(result.supplementOnlyCount).toBe(1);
+  });
+
+  it("aceita gerações distintas entre recursos e usa a mais antiga no snapshot", () => {
+    const result = normalizeTseCandidates(
+      [candidate({ sequenceId: "1" })],
+      [
+        supplement("1", "8", "AGUARDANDO JULGAMENTO", {
+          generatedDate: "18/08/2026",
+          generatedTime: "08:15:00",
+        }),
+      ],
+      new Map(),
+    );
+
+    expect(result.candidateGeneratedAt).toBe("2026-08-17T22:31:13.000Z");
+    expect(result.supplementGeneratedAt).toBe("2026-08-18T11:15:00.000Z");
+    expect(result.sourceGeneratedAt).toBe("2026-08-17T22:31:13.000Z");
+  });
+
+  it("rejeita gerações misturadas dentro de qualquer arquivo individual", () => {
+    expect(() =>
+      normalizeTseCandidates(
+        [
+          candidate({ sequenceId: "1" }),
+          candidate({ sequenceId: "2", generatedTime: "19:31:14" }),
+        ],
+        [supplement("1"), supplement("2")],
+        new Map(),
+      ),
+    ).toThrow(/arquivo principal mistura extrações/);
+
+    expect(() =>
+      normalizeTseCandidates(
+        [candidate({ sequenceId: "1" }), candidate({ sequenceId: "2" })],
+        [
+          supplement("1"),
+          supplement("2", "8", "AGUARDANDO JULGAMENTO", {
+            generatedTime: "19:31:14",
+          }),
+        ],
+        new Map(),
+      ),
+    ).toThrow(/arquivo complementar mistura extrações/);
+  });
+
+  it("continua rejeitando SQ_CANDIDATO duplicado no complementar", () => {
+    expect(() =>
+      normalizeTseCandidates(
+        [candidate({ sequenceId: "1" })],
+        [supplement("1"), supplement("1")],
+        new Map(),
+      ),
+    ).toThrow(/SQ_CANDIDATO duplicado no arquivo complementar/);
   });
 });

@@ -34,6 +34,9 @@ export interface PipelineReport {
   readonly candidateCount: number;
   readonly missingPhotoCount: number;
   readonly sourceGeneratedAt: string;
+  readonly candidateGeneratedAt: string;
+  readonly supplementGeneratedAt: string;
+  readonly supplementOnlyCount: number;
 }
 
 function oneResource(
@@ -149,6 +152,17 @@ export async function runTse2026Pipeline(
 
     progress("Normalizando e validando integralmente o contrato interno...");
     const normalized = normalizeTseCandidates(candidateRows, supplementRows, photos);
+    progress(
+      `Relação por SQ_CANDIDATO: principal ${candidateRows.length}, complementar ${supplementRows.length}, somente no complementar ${normalized.supplementOnlyCount}.`,
+    );
+    if (normalized.supplementOnlyCount > 0) {
+      progress(
+        `${normalized.supplementOnlyCount} registros complementares ainda não presentes no arquivo principal; ignorados nesta geração.`,
+      );
+    }
+    progress(
+      `Gerações dos recursos: principal ${normalized.candidateGeneratedAt}, complementar ${normalized.supplementGeneratedAt}; snapshot efetivo ${normalized.sourceGeneratedAt}.`,
+    );
     const metadata = metadataFor(resources, normalized, options);
     const build = buildSnapshotMetadata(metadata, normalized.candidates);
     const completedStage = await writeAndValidateStage(dataRoot, build, photos);
@@ -166,6 +180,9 @@ export async function runTse2026Pipeline(
       candidateCount: normalized.candidates.length,
       missingPhotoCount: normalized.missingPhotoCount,
       sourceGeneratedAt: normalized.sourceGeneratedAt,
+      candidateGeneratedAt: normalized.candidateGeneratedAt,
+      supplementGeneratedAt: normalized.supplementGeneratedAt,
+      supplementOnlyCount: normalized.supplementOnlyCount,
     };
   } finally {
     if (stage) await rm(stage, { recursive: true, force: true });

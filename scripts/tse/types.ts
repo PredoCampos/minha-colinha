@@ -50,6 +50,9 @@ export type PhotoIndex = ReadonlyMap<string, ReadonlyMap<string, PhotoSource>>;
 export interface NormalizationResult {
   readonly candidates: readonly Candidate[];
   readonly sourceGeneratedAt: string;
+  readonly candidateGeneratedAt: string;
+  readonly supplementGeneratedAt: string;
+  readonly supplementOnlyCount: number;
   readonly rawCandidateCount: number;
   readonly ignoredOfficeCounts: Readonly<Record<string, number>>;
   readonly sourceStatusCounts: Readonly<Record<string, number>>;

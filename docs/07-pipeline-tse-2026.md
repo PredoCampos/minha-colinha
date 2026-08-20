@@ -23,6 +23,8 @@ Os ZIPs de dados contêm agregados `consulta_cand_2026_BRASIL.csv` e `consulta_c
 - CRLF;
 - campos numéricos que podem aparecer sem aspas.
 
+Os dois recursos podem ser publicados em momentos diferentes. O arquivo principal é o conjunto autoritativo: toda candidatura nele deve possuir exatamente um complemento, enquanto complementos ainda ausentes do principal são diagnosticados e ignorados. Cada arquivo precisa ter uma única geração internamente; `sourceGeneratedAt` usa a mais antiga das duas gerações necessárias ao snapshot.
+
 Campos lidos do arquivo principal:
 
 | Campo TSE | Uso interno |
