@@ -1,4 +1,5 @@
 import type { Candidate } from "../candidates/model.ts";
+import { isCandidateSelectable } from "../candidates/availability.ts";
 import type { ElectionConfig, ElectoralLocation, VotingSlotId } from "../election/types.ts";
 import { selectCandidate } from "../election/selections.ts";
 import { generateVotingSlots } from "../election/slots.ts";
@@ -17,7 +18,16 @@ export interface SelectionSession {
 
 export type SessionSelectionResult =
   | Readonly<{ ok: true; session: SelectionSession }>
-  | Readonly<{ ok: false; error: SelectionError }>;
+  | Readonly<{
+      ok: false;
+      error:
+        | SelectionError
+        | Readonly<{
+            code: "CANDIDATE_NOT_SELECTABLE";
+            message: string;
+            slotId: VotingSlotId;
+          }>;
+    }>;
 
 export function startSelectionSession(
   election: ElectionConfig,
@@ -43,6 +53,17 @@ export function selectCandidateInSession(
   slotId: VotingSlotId,
   candidate: Candidate,
 ): SessionSelectionResult {
+  if (!isCandidateSelectable(candidate)) {
+    return {
+      ok: false,
+      error: {
+        code: "CANDIDATE_NOT_SELECTABLE",
+        message: "Esta candidatura não está disponível para seleção.",
+        slotId,
+      },
+    };
+  }
+
   const result = selectCandidate(session.slots, session.selections, slotId, {
     id: candidate.id,
     office: candidate.office,

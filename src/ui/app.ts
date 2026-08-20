@@ -1,10 +1,15 @@
 import {
   CANDIDATE_DATASET_KIND,
+  isCandidatePendingOrAmbiguous,
+  isCandidateSelectable,
   loadCandidateFile,
+  loadCandidateMetadata,
   loadCandidatesForSlots,
   searchCandidates,
   type Candidate,
+  type CandidateDatasetKind,
   type CandidateFile,
+  type CandidateSnapshotMetadata,
 } from "../candidates/index.ts";
 import {
   colinhaFileName,
@@ -32,7 +37,11 @@ import { publicPath } from "../shared/paths.ts";
 
 interface ApplicationState {
   readonly election: ElectionConfig;
+  readonly datasetKind: CandidateDatasetKind;
   session: SelectionSession | null;
+  metadata: CandidateSnapshotMetadata | null;
+  metadataStatus: "loading" | "ready" | "error" | "not-applicable";
+  metadataError: string | null;
   files: ReadonlyMap<ElectoralOffice, CandidateFile>;
   errors: ReadonlyMap<ElectoralOffice, Error>;
   selectionErrors: ReadonlyMap<VotingSlotId, string>;
@@ -61,7 +70,7 @@ function element<K extends keyof HTMLElementTagNameMap>(
   return node;
 }
 
-function createHeader(): HTMLElement {
+function createHeader(datasetKind: CandidateDatasetKind): HTMLElement {
   const header = element("header", "site-header");
   const inner = element("div", "site-header-inner");
   const brand = element("a", "brand", "Minha Colinha");
@@ -71,14 +80,17 @@ function createHeader(): HTMLElement {
     "project-identity",
     "Projeto independente · open source",
   );
-  const developmentBar = element("div", "development-bar");
-  developmentBar.setAttribute("role", "note");
-  developmentBar.append(
-    element("strong", undefined, "Modo de desenvolvimento"),
-    document.createTextNode(" · dados fictícios, não oficiais"),
-  );
   inner.append(brand, identity);
-  header.append(inner, developmentBar);
+  header.append(inner);
+  if (datasetKind === CANDIDATE_DATASET_KIND.DEVELOPMENT_FIXTURE) {
+    const developmentBar = element("div", "development-bar");
+    developmentBar.setAttribute("role", "note");
+    developmentBar.append(
+      element("strong", undefined, "Modo de desenvolvimento"),
+      document.createTextNode(" · dados fictícios, não oficiais"),
+    );
+    header.append(developmentBar);
+  }
   return header;
 }
 
@@ -116,7 +128,10 @@ function selectedCandidate(
   }
   return state.files
     .get(slot.office)
-    ?.candidates.find((candidate) => candidate.id === candidateId);
+    ?.candidates.find(
+      (candidate) =>
+        candidate.id === candidateId && isCandidateSelectable(candidate),
+    );
 }
 
 function createCandidatePhoto(candidate: Candidate): HTMLElement {
@@ -128,7 +143,7 @@ function createCandidatePhoto(candidate: Candidate): HTMLElement {
 
   const image = element("img");
   image.src = publicPath(candidate.photoPath);
-  image.alt = `Foto fictícia de ${candidate.ballotName}`;
+  image.alt = `Foto de ${candidate.ballotName}`;
   image.loading = "lazy";
   image.addEventListener(
     "error",
@@ -147,6 +162,15 @@ function createCandidateDetails(candidate: Candidate): HTMLElement {
   const name = element("span", "candidate-name", candidate.ballotName);
   const party = element("span", "candidate-party", candidate.party);
   content.append(number, name, party);
+  if (isCandidatePendingOrAmbiguous(candidate)) {
+    content.append(
+      element(
+        "span",
+        "candidate-status",
+        "Situação da candidatura ainda não definitiva",
+      ),
+    );
+  }
   return content;
 }
 
@@ -211,13 +235,36 @@ function renderCandidateResults(
   render: () => void,
 ): void {
   container.replaceChildren();
-  const results = searchCandidates(candidates, query);
+  if (query.trim().length === 0) {
+    const guidance = element(
+      "p",
+      "search-guidance",
+      "Digite um nome de urna ou número para ver candidatos.",
+    );
+    guidance.setAttribute("role", "status");
+    container.append(guidance);
+    return;
+  }
 
-  if (results.length === 0) {
+  const matches = searchCandidates(candidates, query);
+
+  if (matches.length === 0) {
     const empty = element("p", "empty-state", "Nenhum candidato encontrado.");
     empty.setAttribute("role", "status");
     container.append(empty);
     return;
+  }
+
+  const maximumVisibleResults = 20;
+  const results = matches.slice(0, maximumVisibleResults);
+  if (matches.length > maximumVisibleResults) {
+    container.append(
+      element(
+        "p",
+        "result-limit",
+        `Mostrando 20 de ${matches.length} resultados. Refine a busca para encontrar a candidatura desejada.`,
+      ),
+    );
   }
 
   const list = element("ul", "candidate-results");
@@ -372,6 +419,91 @@ function locationLabel(location: ElectoralLocation): string {
   return STATE_NAMES[location.uf];
 }
 
+function formatSnapshotDate(value: string): string {
+  return new Intl.DateTimeFormat("pt-BR", {
+    dateStyle: "medium",
+    timeStyle: "short",
+    timeZone: "America/Sao_Paulo",
+  }).format(new Date(value));
+}
+
+function createDataSource(state: ApplicationState): HTMLElement {
+  if (state.datasetKind === CANDIDATE_DATASET_KIND.DEVELOPMENT_FIXTURE) {
+    return element(
+      "p",
+      "data-source data-source-fixture",
+      "Fonte: fixtures fictícias habilitadas explicitamente para desenvolvimento.",
+    );
+  }
+
+  if (state.metadataStatus === "loading") {
+    const loading = element(
+      "p",
+      "data-source",
+      "Carregando procedência dos dados eleitorais…",
+    );
+    loading.setAttribute("role", "status");
+    return loading;
+  }
+
+  if (state.metadataStatus === "error" || !state.metadata) {
+    const error = element(
+      "p",
+      "data-source data-source-error",
+      state.metadataError ??
+        "Não foi possível confirmar a procedência dos dados eleitorais.",
+    );
+    error.setAttribute("role", "alert");
+    return error;
+  }
+
+  const source = element("p", "data-source");
+  const link = element("a", undefined, state.metadata.provider);
+  link.href = state.metadata.sourceUrl;
+  link.target = "_blank";
+  link.rel = "noopener noreferrer";
+  const sourceDate = element(
+    "time",
+    undefined,
+    formatSnapshotDate(state.metadata.sourceGeneratedAt),
+  );
+  sourceDate.dateTime = state.metadata.sourceGeneratedAt;
+  const updateDate = element(
+    "time",
+    undefined,
+    formatSnapshotDate(state.metadata.importedAt),
+  );
+  updateDate.dateTime = state.metadata.importedAt;
+  source.append(
+    document.createTextNode("Fonte: "),
+    link,
+    document.createTextNode(` · ${state.metadata.dataset} · dados gerados em `),
+    sourceDate,
+    document.createTextNode(" · snapshot atualizado em "),
+    updateDate,
+  );
+  return source;
+}
+
+async function loadOfficialMetadata(
+  state: ApplicationState,
+  render: () => void,
+): Promise<void> {
+  try {
+    state.metadata = await loadCandidateMetadata(state.election.year);
+    state.metadataStatus = "ready";
+    state.metadataError = null;
+  } catch (error) {
+    state.metadata = null;
+    state.metadataStatus = "error";
+    state.metadataError =
+      error instanceof Error
+        ? error.message
+        : "Não foi possível confirmar a procedência dos dados eleitorais.";
+  }
+  render();
+}
+
 function createLocationForm(
   state: ApplicationState,
   render: () => void,
@@ -486,7 +618,7 @@ async function loadCurrentCandidates(
     session.slots,
     (request) =>
       loadCandidateFile(request, {
-        datasetKind: CANDIDATE_DATASET_KIND.DEVELOPMENT_FIXTURE,
+        datasetKind: state.datasetKind,
       }),
   );
 
@@ -498,8 +630,8 @@ async function loadCurrentCandidates(
   state.loading = false;
   state.announcement =
     batch.errors.size === 0
-      ? `Candidatos fictícios de ${locationLabel(session.location)} carregados.`
-      : "Alguns dados de desenvolvimento não puderam ser carregados.";
+      ? `Candidatos de ${locationLabel(session.location)} carregados.`
+      : "Alguns dados eleitorais não puderam ser carregados.";
   render();
   if (moveFocus) {
     focusAfterRender("choices-title");
@@ -546,7 +678,9 @@ async function generateExport(
   const model = composeColinhaModel(
     session,
     candidates,
-    "DADOS FICTÍCIOS — DESENVOLVIMENTO — NÃO USE PARA VOTAR",
+    state.datasetKind === CANDIDATE_DATASET_KIND.DEVELOPMENT_FIXTURE
+      ? "DADOS FICTÍCIOS — DESENVOLVIMENTO — NÃO USE PARA VOTAR"
+      : null,
   );
 
   try {
@@ -743,16 +877,17 @@ function createReview(
       : "Você pode revisar agora e completar as posições restantes quando quiser.",
   );
   status.setAttribute("role", "status");
-  const fixtureReminder = element(
-    "p",
-    "review-fixture-reminder",
-    "Revisão com dados fictícios de desenvolvimento — não use estes números para votar.",
-  );
-  section.append(
-    status,
-    fixtureReminder,
-    createExportActions(state, render, complete),
-  );
+  section.append(status);
+  if (state.datasetKind === CANDIDATE_DATASET_KIND.DEVELOPMENT_FIXTURE) {
+    section.append(
+      element(
+        "p",
+        "review-fixture-reminder",
+        "Revisão com dados fictícios de desenvolvimento — não use estes números para votar.",
+      ),
+    );
+  }
+  section.append(createExportActions(state, render, complete));
   return section;
 }
 
@@ -780,19 +915,22 @@ function renderConfiguredApplication(
   for (const benefit of [
     "Escolhas somente na memória deste navegador",
     "Ordem oficial de votação configurada para 2026",
-    "Dados oficiais e auditáveis quando entrar em produção",
+    "Dados oficiais normalizados e auditáveis",
   ]) {
     benefits.append(element("li", undefined, benefit));
   }
-  const fixtureNotice = element("div", "fixture-notice");
-  fixtureNotice.setAttribute("role", "note");
-  fixtureNotice.append(
-    element("strong", undefined, "Ambiente de desenvolvimento: "),
-    document.createTextNode(
-      "esta demonstração usa apenas dados fictícios. Use SP ou DF para testar o fluxo completo; as demais UFs exibem o estado de indisponibilidade.",
-    ),
-  );
-  intro.append(eyebrow, title, text, benefits, fixtureNotice);
+  intro.append(eyebrow, title, text, benefits, createDataSource(state));
+  if (state.datasetKind === CANDIDATE_DATASET_KIND.DEVELOPMENT_FIXTURE) {
+    const fixtureNotice = element("div", "fixture-notice");
+    fixtureNotice.setAttribute("role", "note");
+    fixtureNotice.append(
+      element("strong", undefined, "Ambiente de desenvolvimento: "),
+      document.createTextNode(
+        "esta demonstração usa apenas dados fictícios. Use SP ou DF para testar o fluxo completo; as demais UFs exibem o estado de indisponibilidade.",
+      ),
+    );
+    intro.append(fixtureNotice);
+  }
 
   const locationSection = element("section", "location-section");
   locationSection.setAttribute("aria-labelledby", "location-title");
@@ -840,17 +978,23 @@ function renderConfiguredApplication(
 
   const announcement = element("p", "sr-only", state.announcement);
   announcement.setAttribute("aria-live", "polite");
-  root.replaceChildren(createHeader(), main, createFooter(), announcement);
+  root.replaceChildren(
+    createHeader(state.datasetKind),
+    main,
+    createFooter(),
+    announcement,
+  );
 }
 
 export function mountApplication(
   root: HTMLElement,
   currentYear: number = new Date().getFullYear(),
+  datasetKind: CandidateDatasetKind = CANDIDATE_DATASET_KIND.OFFICIAL_SNAPSHOT,
 ): void {
   const election = electionForYear(currentYear);
   if (!election) {
     root.replaceChildren(
-      createHeader(),
+      createHeader(datasetKind),
       createUnsupportedView(currentYear),
       createFooter(),
     );
@@ -859,7 +1003,14 @@ export function mountApplication(
 
   const state: ApplicationState = {
     election,
+    datasetKind,
     session: null,
+    metadata: null,
+    metadataStatus:
+      datasetKind === CANDIDATE_DATASET_KIND.OFFICIAL_SNAPSHOT
+        ? "loading"
+        : "not-applicable",
+    metadataError: null,
     files: new Map(),
     errors: new Map(),
     selectionErrors: new Map(),
@@ -881,5 +1032,9 @@ export function mountApplication(
     },
     { once: true },
   );
-  renderConfiguredApplication(root, state);
+  const render = () => renderConfiguredApplication(root, state);
+  render();
+  if (datasetKind === CANDIDATE_DATASET_KIND.OFFICIAL_SNAPSHOT) {
+    void loadOfficialMetadata(state, render);
+  }
 }

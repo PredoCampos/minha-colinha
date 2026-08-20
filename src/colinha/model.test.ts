@@ -123,4 +123,20 @@ describe("composição do modelo da colinha", () => {
     expect(model.rows[0]?.candidate).toBeNull();
     expect(model.rows[2]?.candidate).toBeNull();
   });
+
+  it("não compõe uma candidatura não exibível no PNG", () => {
+    const { session, candidates } = completeSession({
+      scope: TERRITORIAL_SCOPE.STATE,
+      uf: "SP",
+    });
+    const unavailableCandidates = candidates.map((candidate) =>
+      candidate.id === "fixture-PRESIDENT:1"
+        ? { ...candidate, status: CANDIDATE_STATUS.NOT_DISPLAYABLE }
+        : candidate,
+    );
+
+    const model = composeColinhaModel(session, unavailableCandidates);
+
+    expect(model.rows[5]?.candidate).toBeNull();
+  });
 });

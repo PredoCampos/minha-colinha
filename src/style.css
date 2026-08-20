@@ -190,6 +190,23 @@ h1 {
   line-height: 1.5;
 }
 
+.data-source {
+  margin: 0;
+  color: #5b675f;
+  font-size: 0.78rem;
+  line-height: 1.5;
+}
+
+.data-source a {
+  color: #315c48;
+  font-weight: 700;
+}
+
+.data-source-error,
+.data-source-fixture {
+  color: #76502d;
+}
+
 .location-section {
   max-width: 46rem;
   margin-bottom: 4rem;
@@ -409,6 +426,18 @@ select {
   font-size: 0.88rem;
 }
 
+.candidate-status {
+  width: fit-content;
+  margin-top: 0.2rem;
+  padding: 0.22rem 0.42rem;
+  border-radius: 0.3rem;
+  color: #694719;
+  background: #fff0cf;
+  font-size: 0.72rem;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
 .candidate-search {
   margin-bottom: 0.75rem;
 }
@@ -419,6 +448,14 @@ select {
   margin: 0;
   padding: 0;
   list-style: none;
+}
+
+.search-guidance,
+.result-limit {
+  margin-bottom: 0.75rem;
+  color: #5b675f;
+  font-size: 0.84rem;
+  line-height: 1.45;
 }
 
 .candidate-card {
@@ -561,6 +598,11 @@ select {
 .review-candidate .candidate-party,
 .review-empty {
   color: #c9d8cf;
+}
+
+.review-candidate .candidate-status {
+  color: #ffe0a8;
+  background: rgb(255 224 168 / 12%);
 }
 
 .review-empty {

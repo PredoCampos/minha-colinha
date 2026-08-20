@@ -1,4 +1,5 @@
-import { CANDIDATE_STATUS, type Candidate } from "./model.ts";
+import { isCandidateSelectable } from "./availability.ts";
+import type { Candidate } from "./model.ts";
 
 function normalizeSearchText(value: string): string {
   return value
@@ -34,7 +35,7 @@ export function searchCandidates(
   return candidates
     .filter(
       (candidate) =>
-        candidate.status === CANDIDATE_STATUS.DISPLAYABLE &&
+        isCandidateSelectable(candidate) &&
         (normalizedQuery.length === 0 ||
           candidate.number.includes(normalizedQuery) ||
           normalizeSearchText(candidate.ballotName).includes(normalizedQuery)),

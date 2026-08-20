@@ -1,5 +1,10 @@
 export { filterCandidates } from "./filter.ts";
 export type { CandidateFilter } from "./filter.ts";
+export {
+  candidateAvailability,
+  isCandidatePendingOrAmbiguous,
+  isCandidateSelectable,
+} from "./availability.ts";
 export { CandidateDataError, loadCandidateFile } from "./load.ts";
 export type {
   CandidateDataErrorCode,
@@ -10,6 +15,18 @@ export {
   CANDIDATE_DATASET_KIND,
   CANDIDATE_STATUS,
 } from "./model.ts";
+export {
+  CandidateMetadataError,
+  candidateMetadataPath,
+  loadCandidateMetadata,
+  validateCandidateSnapshotMetadata,
+} from "./metadata.ts";
+export type {
+  CandidateMetadataErrorCode,
+  CandidateMetadataFetcher,
+  CandidateSnapshotMetadata,
+  LoadCandidateMetadataOptions,
+} from "./metadata.ts";
 export type {
   Candidate,
   CandidateDataPartition,

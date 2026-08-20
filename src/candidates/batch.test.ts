@@ -29,6 +29,20 @@ describe("requisições derivadas dos slots", () => {
     ).toEqual({ scope: TERRITORIAL_SCOPE.NATIONAL });
   });
 
+  it("solicita Deputado Distrital, e não Estadual, para o DF", () => {
+    const location = { scope: TERRITORIAL_SCOPE.STATE, uf: "DF" } as const;
+    const requests = candidateRequestsForSlots(
+      2026,
+      location,
+      generateVotingSlots(ELECTION_2026, location),
+    );
+    const offices = requests.map(({ office }) => office);
+
+    expect(requests).toHaveLength(5);
+    expect(offices).toContain(ELECTORAL_OFFICE.DISTRICT_DEPUTY);
+    expect(offices).not.toContain(ELECTORAL_OFFICE.STATE_DEPUTY);
+  });
+
   it("mantém arquivos válidos quando outro cargo falha", async () => {
     const location = { scope: TERRITORIAL_SCOPE.STATE, uf: "SP" } as const;
     const slots = generateVotingSlots(ELECTION_2026, location).slice(0, 2);

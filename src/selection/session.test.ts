@@ -10,7 +10,10 @@ import {
   startSelectionSession,
 } from "./session.ts";
 
-function senator(id: string): Candidate {
+function senator(
+  id: string,
+  status: Candidate["status"] = CANDIDATE_STATUS.DISPLAYABLE,
+): Candidate {
   return {
     id,
     electionYear: 2026,
@@ -19,7 +22,7 @@ function senator(id: string): Candidate {
     ballotName: id,
     party: "EXM",
     photoPath: null,
-    status: CANDIDATE_STATUS.DISPLAYABLE,
+    status,
     jurisdiction: { scope: TERRITORIAL_SCOPE.STATE, uf: "SP" },
   };
 }
@@ -87,6 +90,31 @@ describe("sessão efêmera de seleção", () => {
     expect(result).toMatchObject({
       ok: false,
       error: { code: "OFFICE_MISMATCH" },
+    });
+  });
+
+  it("permite candidatura pendente e rejeita candidatura não exibível", () => {
+    const session = startSelectionSession(ELECTION_2026, {
+      scope: TERRITORIAL_SCOPE.STATE,
+      uf: "SP",
+    });
+
+    expect(
+      selectCandidateInSession(
+        session,
+        "SENATOR:1",
+        senator("senator-pending", CANDIDATE_STATUS.PENDING_OR_AMBIGUOUS),
+      ).ok,
+    ).toBe(true);
+    expect(
+      selectCandidateInSession(
+        session,
+        "SENATOR:1",
+        senator("senator-hidden", CANDIDATE_STATUS.NOT_DISPLAYABLE),
+      ),
+    ).toMatchObject({
+      ok: false,
+      error: { code: "CANDIDATE_NOT_SELECTABLE" },
     });
   });
 

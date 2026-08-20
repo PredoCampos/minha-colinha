@@ -63,6 +63,8 @@ Para ZIPs oficiais já baixados, use `npm run data:tse -- --input-dir <diretóri
 
 `public/data/2026/` é um artefato gerado e ignorado pelo Git. No GitHub Pages, o workflow baixa e valida os dados oficiais, executa o build com o snapshot completo e publica o diretório `dist` somente quando todas as etapas terminam com sucesso. A atualização ocorre em pushes para `main`, uma vez por dia e sob execução manual, sem commit automático ou PR de dados e fotografias.
 
+A SPA usa esse snapshot oficial como fonte padrão em runtime: lê os metadados de procedência, baixa somente os cinco arquivos de candidatos necessários para a UF escolhida (quatro estaduais e Presidente em `BR`) e carrega fotos locais sob demanda. As fixtures em `public/data/development-fixtures/` exigem ativação explícita em código de desenvolvimento ou teste e são removidas do build de produção.
+
 ## Referências oficiais principais
 
 - TSE — Candidatos 2026: https://dadosabertos.tse.jus.br/dataset/candidatos-2026

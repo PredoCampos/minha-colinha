@@ -38,6 +38,17 @@ const candidates: readonly Candidate[] = [
     status: CANDIDATE_STATUS.PENDING_OR_AMBIGUOUS,
     jurisdiction: { scope: TERRITORIAL_SCOPE.NATIONAL },
   },
+  {
+    id: "fixture-not-displayable",
+    electionYear: 2026,
+    office: ELECTORAL_OFFICE.PRESIDENT,
+    number: "40",
+    ballotName: "Registro não exibível",
+    party: "DEV",
+    photoPath: null,
+    status: CANDIDATE_STATUS.NOT_DISPLAYABLE,
+    jurisdiction: { scope: TERRITORIAL_SCOPE.NATIONAL },
+  },
 ];
 
 describe("busca local de candidatos", () => {
@@ -57,11 +68,18 @@ describe("busca local de candidatos", () => {
     expect(searchCandidates(candidates, "").map(({ number }) => number)).toEqual([
       "10",
       "20",
+      "30",
     ]);
   });
 
-  it("não apresenta candidaturas que não são exibíveis", () => {
-    expect(searchCandidates(candidates, "pendente")).toEqual([]);
+  it("apresenta candidaturas pendentes para seleção", () => {
+    expect(searchCandidates(candidates, "pendente").map(({ id }) => id)).toEqual([
+      "fixture-pending",
+    ]);
+  });
+
+  it("não apresenta candidaturas marcadas como não exibíveis", () => {
+    expect(searchCandidates(candidates, "não exibível")).toEqual([]);
   });
 
   it("retorna lista vazia quando não há correspondência", () => {

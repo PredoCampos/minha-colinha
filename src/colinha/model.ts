@@ -1,4 +1,5 @@
 import type { Candidate } from "../candidates/model.ts";
+import { isCandidateSelectable } from "../candidates/availability.ts";
 import { ELECTION_TYPE } from "../election/types.ts";
 import type { SelectionSession } from "../selection/session.ts";
 
@@ -51,7 +52,9 @@ export function composeColinhaModel(
       const candidateId = session.selections[slot.id];
       const candidate = candidateId ? candidatesById.get(candidateId) : undefined;
       const validCandidate =
-        candidate?.office === slot.office ? candidate : undefined;
+        candidate?.office === slot.office && isCandidateSelectable(candidate)
+          ? candidate
+          : undefined;
 
       return {
         slotId: slot.id,
