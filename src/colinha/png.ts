@@ -128,12 +128,16 @@ function drawHeader(
   context.fillText(model.title, rectangle.x + 36, rectangle.y + 68);
   context.fillStyle = "#dbe9df";
   context.font = "600 28px system-ui, sans-serif";
-  context.fillText(model.electionLabel, rectangle.x + 36, rectangle.y + 108);
+  context.fillText(
+    fitText(context, model.electionLocationLabel, rectangle.width - 72),
+    rectangle.x + 36,
+    rectangle.y + 112,
+  );
   context.font = "500 21px system-ui, sans-serif";
   context.fillText(
     "Ordem oficial de votação",
     rectangle.x + 36,
-    rectangle.y + 137,
+    rectangle.y + 146,
   );
 }
 
@@ -217,6 +221,31 @@ function drawRow(
   context.fillStyle = "#536057";
   context.font = "600 24px system-ui, sans-serif";
   context.fillText(row.candidate.party, textX, rectangle.y + 204);
+  if (row.candidate.pendingOrAmbiguous) {
+    context.fillStyle = "#785513";
+    context.font = "700 19px system-ui, sans-serif";
+    context.fillText(
+      "Situação ainda não definitiva",
+      textX,
+      rectangle.y + 230,
+    );
+  }
+}
+
+function drawFooter(
+  context: CanvasRenderingContext2D,
+  rectangle: Rectangle,
+  label: string,
+): void {
+  context.fillStyle = "#536057";
+  context.font = "600 21px system-ui, sans-serif";
+  context.textAlign = "center";
+  context.fillText(
+    fitText(context, label, rectangle.width - 32),
+    rectangle.x + rectangle.width / 2,
+    rectangle.y + 38,
+  );
+  context.textAlign = "start";
 }
 
 function loadPhoto(path: string): Promise<HTMLImageElement> {
@@ -261,7 +290,11 @@ function canvasToPng(canvas: HTMLCanvasElement): Promise<Blob> {
 
 export async function generateColinhaPng(model: ColinhaModel): Promise<Blob> {
   await document.fonts.ready;
-  const layout = calculateColinhaLayout(model.rows.length, model.notice !== null);
+  const layout = calculateColinhaLayout(
+    model.rows.length,
+    model.notice !== null,
+    model.dataUpdatedLabel !== null,
+  );
   const photos = await loadPhotos(model);
   const canvas = document.createElement("canvas");
   canvas.width = layout.width;
@@ -285,6 +318,9 @@ export async function generateColinhaPng(model: ColinhaModel): Promise<Blob> {
       drawRow(context, rectangle, row, photos[index] ?? null);
     }
   });
+  if (layout.footer && model.dataUpdatedLabel) {
+    drawFooter(context, layout.footer, model.dataUpdatedLabel);
+  }
 
   const blob = await canvasToPng(canvas);
   canvas.width = 1;

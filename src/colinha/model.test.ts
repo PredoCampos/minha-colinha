@@ -48,18 +48,26 @@ describe("composição do modelo da colinha", () => {
     const model = composeColinhaModel(
       session,
       candidates,
-      "DADOS FICTÍCIOS",
+      {
+        notice: "DADOS FICTÍCIOS",
+        snapshotImportedAt: "2026-08-20T15:00:00.000Z",
+      },
     );
 
-    expect(model.electionLabel).toBe("Eleições Gerais 2026");
+    expect(model.electionLocationLabel).toBe(
+      "Eleições Gerais 2026 · São Paulo (SP)",
+    );
     expect(model.notice).toBe("DADOS FICTÍCIOS");
+    expect(model.dataUpdatedLabel).toBe(
+      "Dados do TSE atualizados em 20/08/2026",
+    );
     expect(model.rows.map(({ officeLabel }) => officeLabel)).toEqual([
       "Deputado Federal",
       "Deputado Estadual",
       "Senador — 1ª escolha",
       "Senador — 2ª escolha",
       "Governador",
-      "Presidente da República",
+      "Presidente",
     ]);
     expect(model.rows.map(({ order }) => order)).toEqual([1, 2, 3, 4, 5, 6]);
   });
@@ -138,5 +146,44 @@ describe("composição do modelo da colinha", () => {
     const model = composeColinhaModel(session, unavailableCandidates);
 
     expect(model.rows[5]?.candidate).toBeNull();
+  });
+
+  it("sinaliza candidatura pendente e mantém posições não preenchidas", () => {
+    const { session, candidates } = completeSession({
+      scope: TERRITORIAL_SCOPE.STATE,
+      uf: "MA",
+    });
+    const pendingCandidates = candidates.map((candidate) =>
+      candidate.id === "fixture-SENATOR:1"
+        ? {
+            ...candidate,
+            status: CANDIDATE_STATUS.PENDING_OR_AMBIGUOUS,
+          }
+        : candidate,
+    );
+    const model = composeColinhaModel(
+      {
+        ...session,
+        selections: { "SENATOR:1": "fixture-SENATOR:1" },
+      },
+      pendingCandidates,
+    );
+
+    expect(model.electionLocationLabel).toContain("Maranhão (MA)");
+    expect(model.rows[2]?.candidate?.pendingOrAmbiguous).toBe(true);
+    expect(model.rows.filter(({ candidate }) => candidate === null)).toHaveLength(5);
+  });
+
+  it("rejeita data inválida de atualização", () => {
+    const { session, candidates } = completeSession({
+      scope: TERRITORIAL_SCOPE.STATE,
+      uf: "SP",
+    });
+
+    expect(() =>
+      composeColinhaModel(session, candidates, {
+        snapshotImportedAt: "data-inválida",
+      }),
+    ).toThrow("data de atualização");
   });
 });

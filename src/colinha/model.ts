@@ -1,6 +1,10 @@
 import type { Candidate } from "../candidates/model.ts";
-import { isCandidateSelectable } from "../candidates/availability.ts";
-import { ELECTION_TYPE } from "../election/types.ts";
+import {
+  isCandidatePendingOrAmbiguous,
+  isCandidateSelectable,
+} from "../candidates/availability.ts";
+import { ELECTION_TYPE, TERRITORIAL_SCOPE } from "../election/types.ts";
+import { STATE_NAMES } from "../location/states.ts";
 import type { SelectionSession } from "../selection/session.ts";
 
 export interface ColinhaCandidate {
@@ -9,6 +13,7 @@ export interface ColinhaCandidate {
   readonly ballotName: string;
   readonly party: string;
   readonly photoPath: string | null;
+  readonly pendingOrAmbiguous: boolean;
 }
 
 export interface ColinhaRow {
@@ -20,25 +25,52 @@ export interface ColinhaRow {
 
 export interface ColinhaModel {
   readonly title: "Minha Colinha";
-  readonly electionLabel: string;
+  readonly electionLocationLabel: string;
   readonly notice: string | null;
+  readonly dataUpdatedLabel: string | null;
   readonly rows: readonly ColinhaRow[];
 }
 
-function electionLabel(session: SelectionSession): string {
+export interface ComposeColinhaOptions {
+  readonly notice?: string | null;
+  readonly snapshotImportedAt?: string | null;
+}
+
+function electionLocationLabel(session: SelectionSession): string {
   const electionName =
     session.election.type === ELECTION_TYPE.GENERAL
       ? "Eleições Gerais"
       : session.election.type === ELECTION_TYPE.MUNICIPAL
         ? "Eleições Municipais"
         : "Eleição";
-  return `${electionName} ${session.election.year}`;
+  const location =
+    session.location.scope === TERRITORIAL_SCOPE.NATIONAL
+      ? "Brasil"
+      : session.location.scope === TERRITORIAL_SCOPE.STATE
+        ? `${STATE_NAMES[session.location.uf]} (${session.location.uf})`
+        : `${session.location.municipalityName} (${session.location.uf})`;
+  return `${electionName} ${session.election.year} · ${location}`;
+}
+
+function dataUpdatedLabel(importedAt: string | null | undefined): string | null {
+  if (!importedAt) {
+    return null;
+  }
+  const importedDate = new Date(importedAt);
+  if (Number.isNaN(importedDate.getTime())) {
+    throw new Error("A data de atualização do snapshot é inválida.");
+  }
+  const formattedDate = new Intl.DateTimeFormat("pt-BR", {
+    dateStyle: "short",
+    timeZone: "America/Sao_Paulo",
+  }).format(importedDate);
+  return `Dados do TSE atualizados em ${formattedDate}`;
 }
 
 export function composeColinhaModel(
   session: SelectionSession,
   candidates: readonly Candidate[],
-  notice: string | null = null,
+  options: ComposeColinhaOptions = {},
 ): ColinhaModel {
   const candidatesById = new Map(
     candidates.map((candidate) => [candidate.id, candidate]),
@@ -46,8 +78,9 @@ export function composeColinhaModel(
 
   return {
     title: "Minha Colinha",
-    electionLabel: electionLabel(session),
-    notice,
+    electionLocationLabel: electionLocationLabel(session),
+    notice: options.notice ?? null,
+    dataUpdatedLabel: dataUpdatedLabel(options.snapshotImportedAt),
     rows: session.slots.map((slot) => {
       const candidateId = session.selections[slot.id];
       const candidate = candidateId ? candidatesById.get(candidateId) : undefined;
@@ -67,6 +100,8 @@ export function composeColinhaModel(
               ballotName: validCandidate.ballotName,
               party: validCandidate.party,
               photoPath: validCandidate.photoPath,
+              pendingOrAmbiguous:
+                isCandidatePendingOrAmbiguous(validCandidate),
             }
           : null,
       };

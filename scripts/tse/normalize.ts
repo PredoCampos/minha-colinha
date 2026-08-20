@@ -10,9 +10,8 @@ import {
 } from "../../src/election/types.ts";
 import { TSE_2026 } from "./config.ts";
 import {
-  mapTseJudgmentStatus,
   mapTseOffice,
-  validateObservedCandidacyStatus,
+  resolveTseCandidateStatus,
 } from "./mappings.ts";
 import type {
   NormalizationResult,
@@ -152,16 +151,6 @@ export function normalizeTseCandidates(
     }
     seen.add(row.sequenceId);
 
-    validateObservedCandidacyStatus(
-      row.candidacyStatusCode,
-      row.candidacyStatusDescription,
-    );
-    const office = mapTseOffice(row.officeCode, row.officeDescription);
-    if (!office) {
-      increment(ignoredOfficeCounts, `${row.officeCode} ${row.officeDescription}`);
-      continue;
-    }
-
     const supplement = supplements.get(row.sequenceId);
     if (!supplement) {
       throw new Error(`Não há registro complementar para SQ_CANDIDATO ${row.sequenceId}.`);
@@ -171,10 +160,18 @@ export function normalizeTseCandidates(
       throw new Error(`Ano divergente no registro complementar ${row.sequenceId}.`);
     }
 
-    const status = mapTseJudgmentStatus(
+    const status = resolveTseCandidateStatus(
+      row.candidacyStatusCode,
+      row.candidacyStatusDescription,
       supplement.judgmentStatusCode,
       supplement.judgmentStatusDescription,
     );
+    const office = mapTseOffice(row.officeCode, row.officeDescription);
+    if (!office) {
+      increment(ignoredOfficeCounts, `${row.officeCode} ${row.officeDescription}`);
+      continue;
+    }
+
     increment(
       sourceStatusCounts,
       `${supplement.judgmentStatusCode} ${supplement.judgmentStatusDescription}`,

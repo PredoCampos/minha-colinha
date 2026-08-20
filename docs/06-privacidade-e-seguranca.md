@@ -235,4 +235,4 @@ Para 2026, a fonte principal é o conjunto “Candidatos — 2026” do Portal d
 
 ## 11. Política de divulgação de vulnerabilidades
 
-Antes do lançamento público, o repositório deve incluir `SECURITY.md` com canal de relato responsável, escopo e expectativa de não divulgar dados eleitorais reais em demonstrações de vulnerabilidade.
+O canal de relato responsável, escopo e cuidados para não divulgar escolhas eleitorais reais estão em [`SECURITY.md`](../SECURITY.md).

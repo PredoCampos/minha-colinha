@@ -6,7 +6,7 @@ export const OFFICE_LABELS: Readonly<Record<ElectoralOffice, string>> = {
   [ELECTORAL_OFFICE.DISTRICT_DEPUTY]: "Deputado Distrital",
   [ELECTORAL_OFFICE.SENATOR]: "Senador",
   [ELECTORAL_OFFICE.GOVERNOR]: "Governador",
-  [ELECTORAL_OFFICE.PRESIDENT]: "Presidente da República",
+  [ELECTORAL_OFFICE.PRESIDENT]: "Presidente",
   [ELECTORAL_OFFICE.COUNCILOR]: "Vereador",
   [ELECTORAL_OFFICE.MAYOR]: "Prefeito",
 };

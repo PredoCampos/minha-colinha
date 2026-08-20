@@ -66,7 +66,7 @@ Código e descrição precisam coincidir. Valor novo ou divergente aborta o pipe
 
 ## 4. Situações
 
-Na extração oficial inspecionada, o arquivo principal ainda apresentava `-3 / #NE` para todas as 20.638 linhas. A informação útil já estava no arquivo complementar:
+Na extração 2026 inspecionada, o arquivo principal apresentava `-3 / #NE` para todas as 20.638 linhas; `#NE` não é um status eleitoral interno. O `leiame.pdf` descreve os campos, mas não fornece um catálogo adicional de códigos. A informação útil concretamente presente em 2026 está no arquivo complementar:
 
 | Código | Descrição TSE | Status interno |
 | ---: | --- | --- |
@@ -78,7 +78,9 @@ Na extração oficial inspecionada, o arquivo principal ainda apresentava `-3 / 
 | 13 | PEDIDO NÃO CONHECIDO | `NOT_DISPLAYABLE` |
 | 14 | INDEFERIDO | `NOT_DISPLAYABLE` |
 
-Decisão de produto: deferimento com recurso permanece exibível; indeferimento com recurso é mantido como ambíguo; renúncia, indeferimento sem indicação de recurso e pedido não conhecido não são exibíveis. Os registros continuam no snapshot com seu status — o adaptador não apaga a informação. Situação nova interrompe a atualização para revisão humana.
+Decisão de produto: deferimento com recurso permanece exibível; indeferimento com recurso é mantido como ambíguo; renúncia, indeferimento sem indicação de recurso e pedido não conhecido não são exibíveis. Os registros continuam no snapshot com seu status — o adaptador não apaga a informação. Código novo, inclusive um valor conhecido apenas por eleições anteriores, ou descrição divergente interrompe a atualização para revisão humana.
+
+A decisão e suas consequências estão registradas no [ADR-008](adr/008-ciclo-de-vida-candidatura.md).
 
 ## 5. Fotografias
 

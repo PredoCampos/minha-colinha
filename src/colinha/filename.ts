@@ -9,9 +9,9 @@ export function colinhaFileName(
 ): string {
   const locationSegment =
     location.scope === TERRITORIAL_SCOPE.NATIONAL
-      ? "br"
+      ? "BR"
       : location.scope === TERRITORIAL_SCOPE.STATE
-        ? location.uf.toLocaleLowerCase("pt-BR")
-        : `${location.uf.toLocaleLowerCase("pt-BR")}-${location.municipalityCode}`;
+        ? location.uf
+        : `${location.uf}-${location.municipalityCode}`;
   return `minha-colinha-${electionYear}-${locationSegment}.png`;
 }

@@ -21,3 +21,4 @@ Cada ADR contém:
 - [ADR-005 — Configuração eleitoral declarativa](005-configuracao-eleitoral-declarativa.md)
 - [ADR-006 — Fotografias oficiais como dado essencial](006-fotos-oficiais.md)
 - [ADR-007 — Snapshot oficial gerado no deploy](007-snapshot-gerado-no-deploy.md)
+- [ADR-008 — Ciclo de vida e exibição de candidaturas](008-ciclo-de-vida-candidatura.md)

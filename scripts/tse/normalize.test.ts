@@ -152,5 +152,40 @@ describe("normalização TSE → modelo interno", () => {
         new Map(),
       ),
     ).toThrow(/fora do DF/);
+    expect(() =>
+      normalizeTseCandidates(
+        [
+          candidate({
+            sequenceId: "1",
+            candidacyStatusCode: "99",
+            candidacyStatusDescription: "NOVA SITUAÇÃO",
+          }),
+        ],
+        [supplement("1", "2", "DEFERIDO")],
+        new Map(),
+      ),
+    ).toThrow(/Situação geral de candidatura TSE desconhecida/);
+  });
+
+  it("preserva as transições de julgamento observadas em 2026", () => {
+    const result = normalizeTseCandidates(
+      [
+        candidate({ sequenceId: "1" }),
+        candidate({ sequenceId: "2" }),
+        candidate({ sequenceId: "3" }),
+      ],
+      [
+        supplement("1", "16", "DEFERIDO EM PRAZO RECURSAL OU COM RECURSO"),
+        supplement("2", "4", "INDEFERIDO EM PRAZO RECURSAL OU COM RECURSO"),
+        supplement("3", "6", "RENÚNCIA"),
+      ],
+      new Map(),
+    );
+
+    expect(result.candidates.map(({ status }) => status)).toEqual([
+      CANDIDATE_STATUS.DISPLAYABLE,
+      CANDIDATE_STATUS.PENDING_OR_AMBIGUOUS,
+      CANDIDATE_STATUS.NOT_DISPLAYABLE,
+    ]);
   });
 });

@@ -10,7 +10,7 @@ describe("nome do arquivo exportado", () => {
         scope: TERRITORIAL_SCOPE.STATE,
         uf: "SP",
       }),
-    ).toBe("minha-colinha-2026-sp.png");
+    ).toBe("minha-colinha-2026-SP.png");
   });
 
   it("suporta circunscrição municipal futura", () => {
@@ -21,6 +21,6 @@ describe("nome do arquivo exportado", () => {
         municipalityCode: "2111300",
         municipalityName: "São Luís",
       }),
-    ).toBe("minha-colinha-2028-ma-2111300.png");
+    ).toBe("minha-colinha-2028-MA-2111300.png");
   });
 });

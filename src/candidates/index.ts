@@ -42,7 +42,12 @@ export {
   loadCandidatesForSlots,
 } from "./batch.ts";
 export type { CandidateBatch, CandidateFileLoader } from "./batch.ts";
-export { searchCandidates } from "./search.ts";
+export {
+  MAX_VISIBLE_CANDIDATE_RESULTS,
+  searchCandidates,
+  visibleCandidateSearchResults,
+} from "./search.ts";
+export type { CandidateSearchPage } from "./search.ts";
 export type {
   ValidationIssue,
   ValidationResult,

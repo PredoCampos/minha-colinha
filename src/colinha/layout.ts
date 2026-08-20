@@ -11,19 +11,22 @@ export interface ColinhaLayout {
   readonly header: Rectangle;
   readonly notice: Rectangle | null;
   readonly rows: readonly Rectangle[];
+  readonly footer: Rectangle | null;
 }
 
 const CANVAS_WIDTH = 1080;
 const OUTER_MARGIN = 56;
-const HEADER_HEIGHT = 156;
+const HEADER_HEIGHT = 170;
 const NOTICE_HEIGHT = 54;
 const SECTION_GAP = 18;
-const ROW_HEIGHT = 220;
+const ROW_HEIGHT = 244;
 const ROW_GAP = 16;
+const FOOTER_HEIGHT = 62;
 
 export function calculateColinhaLayout(
   rowCount: number,
   hasNotice: boolean,
+  hasFooter = false,
 ): ColinhaLayout {
   if (!Number.isInteger(rowCount) || rowCount < 1) {
     throw new Error("A colinha precisa ter pelo menos uma posição.");
@@ -52,12 +55,23 @@ export function calculateColinhaLayout(
     height: ROW_HEIGHT,
   }));
   const lastRow = rows.at(-1);
+  const footer = hasFooter
+    ? {
+        x: OUTER_MARGIN,
+        y: (lastRow?.y ?? firstRowY) + ROW_HEIGHT + SECTION_GAP,
+        width: header.width,
+        height: FOOTER_HEIGHT,
+      }
+    : null;
 
   return {
     width: CANVAS_WIDTH,
-    height: (lastRow?.y ?? firstRowY) + ROW_HEIGHT + OUTER_MARGIN,
+    height:
+      (footer ? footer.y + footer.height : (lastRow?.y ?? firstRowY) + ROW_HEIGHT) +
+      OUTER_MARGIN,
     header,
     notice,
     rows,
+    footer,
   };
 }

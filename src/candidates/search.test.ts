@@ -2,7 +2,11 @@ import { describe, expect, it } from "vitest";
 
 import { ELECTORAL_OFFICE, TERRITORIAL_SCOPE } from "../election/types.ts";
 import { CANDIDATE_STATUS, type Candidate } from "./model.ts";
-import { searchCandidates } from "./search.ts";
+import {
+  MAX_VISIBLE_CANDIDATE_RESULTS,
+  searchCandidates,
+  visibleCandidateSearchResults,
+} from "./search.ts";
 
 const candidates: readonly Candidate[] = [
   {
@@ -12,6 +16,28 @@ const candidates: readonly Candidate[] = [
     number: "20",
     ballotName: "Árvore Exemplo",
     party: "EXM",
+    photoPath: null,
+    status: CANDIDATE_STATUS.DISPLAYABLE,
+    jurisdiction: { scope: TERRITORIAL_SCOPE.NATIONAL },
+  },
+  {
+    id: "fixture-carlos",
+    electionYear: 2026,
+    office: ELECTORAL_OFFICE.PRESIDENT,
+    number: "100",
+    ballotName: "Carlos Mendes",
+    party: "TST",
+    photoPath: null,
+    status: CANDIDATE_STATUS.DISPLAYABLE,
+    jurisdiction: { scope: TERRITORIAL_SCOPE.NATIONAL },
+  },
+  {
+    id: "fixture-luiza",
+    electionYear: 2026,
+    office: ELECTORAL_OFFICE.PRESIDENT,
+    number: "101",
+    ballotName: "Luíza Carvalho",
+    party: "TST",
     photoPath: null,
     status: CANDIDATE_STATUS.DISPLAYABLE,
     jurisdiction: { scope: TERRITORIAL_SCOPE.NATIONAL },
@@ -61,7 +87,31 @@ describe("busca local de candidatos", () => {
   it("busca pelo número", () => {
     expect(searchCandidates(candidates, "10").map(({ id }) => id)).toEqual([
       "fixture-10",
+      "fixture-carlos",
+      "fixture-luiza",
     ]);
+  });
+
+  it("busca apenas no início de palavras do nome", () => {
+    expect(searchCandidates(candidates, "l").map(({ id }) => id)).toEqual([
+      "fixture-luiza",
+    ]);
+    expect(searchCandidates(candidates, "los")).toEqual([]);
+  });
+
+  it("combina termos que começam palavras diferentes, sem caixa ou acento", () => {
+    expect(searchCandidates(candidates, "CAR lu").map(({ id }) => id)).toEqual([
+      "fixture-luiza",
+    ]);
+  });
+
+  it("busca número somente pelo início", () => {
+    expect(searchCandidates(candidates, "1").map(({ id }) => id)).toEqual([
+      "fixture-10",
+      "fixture-carlos",
+      "fixture-luiza",
+    ]);
+    expect(searchCandidates(candidates, "00")).toEqual([]);
   });
 
   it("mantém ordenação numérica determinística sem termo", () => {
@@ -69,7 +119,23 @@ describe("busca local de candidatos", () => {
       "10",
       "20",
       "30",
+      "100",
+      "101",
     ]);
+  });
+
+  it("limita a apresentação depois de filtrar a coleção completa", () => {
+    const manyCandidates = Array.from({ length: 24 }, (_, index): Candidate => ({
+      ...candidates[0]!,
+      id: `fixture-many-${index}`,
+      number: String(1000 + index),
+      ballotName: `Pessoa ${index}`,
+    }));
+
+    const result = visibleCandidateSearchResults(manyCandidates, "pes");
+
+    expect(result.total).toBe(24);
+    expect(result.candidates).toHaveLength(MAX_VISIBLE_CANDIDATE_RESULTS);
   });
 
   it("apresenta candidaturas pendentes para seleção", () => {

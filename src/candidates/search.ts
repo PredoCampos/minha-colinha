@@ -9,6 +9,10 @@ function normalizeSearchText(value: string): string {
     .trim();
 }
 
+function searchTokens(value: string): readonly string[] {
+  return normalizeSearchText(value).match(/[a-z0-9]+/g) ?? [];
+}
+
 function compareCandidates(first: Candidate, second: Candidate): number {
   const numberLength = first.number.length - second.number.length;
   if (numberLength !== 0) {
@@ -31,14 +35,39 @@ export function searchCandidates(
   query: string,
 ): readonly Candidate[] {
   const normalizedQuery = normalizeSearchText(query);
+  const queryTokens = searchTokens(query);
+  const isNumericQuery = /^\d+$/.test(normalizedQuery);
 
   return candidates
     .filter(
       (candidate) =>
         isCandidateSelectable(candidate) &&
         (normalizedQuery.length === 0 ||
-          candidate.number.includes(normalizedQuery) ||
-          normalizeSearchText(candidate.ballotName).includes(normalizedQuery)),
+          (isNumericQuery
+            ? candidate.number.startsWith(normalizedQuery)
+            : queryTokens.every((queryToken) =>
+                searchTokens(candidate.ballotName).some((nameToken) =>
+                  nameToken.startsWith(queryToken),
+                ),
+              ))),
     )
     .sort(compareCandidates);
+}
+
+export const MAX_VISIBLE_CANDIDATE_RESULTS = 20;
+
+export interface CandidateSearchPage {
+  readonly candidates: readonly Candidate[];
+  readonly total: number;
+}
+
+export function visibleCandidateSearchResults(
+  candidates: readonly Candidate[],
+  query: string,
+): CandidateSearchPage {
+  const matches = searchCandidates(candidates, query);
+  return {
+    candidates: matches.slice(0, MAX_VISIBLE_CANDIDATE_RESULTS),
+    total: matches.length,
+  };
 }

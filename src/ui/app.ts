@@ -5,7 +5,7 @@ import {
   loadCandidateFile,
   loadCandidateMetadata,
   loadCandidatesForSlots,
-  searchCandidates,
+  visibleCandidateSearchResults,
   type Candidate,
   type CandidateDatasetKind,
   type CandidateFile,
@@ -15,6 +15,7 @@ import {
   colinhaFileName,
   composeColinhaModel,
   generateColinhaPng,
+  triggerBlobDownload,
 } from "../colinha/index.ts";
 import { electionForYear } from "../election/elections.ts";
 import {
@@ -54,10 +55,12 @@ interface ApplicationState {
   loading: boolean;
   announcement: string;
   loadVersion: number;
-  exportStatus: "idle" | "generating" | "ready" | "error";
+  exportStatus: "idle" | "generating" | "fallback" | "error";
   exportUrl: string | null;
   exportError: string | null;
   exportVersion: number;
+  aboutOpen: boolean;
+  locationEditing: boolean;
 }
 
 function element<K extends keyof HTMLElementTagNameMap>(
@@ -75,7 +78,10 @@ function element<K extends keyof HTMLElementTagNameMap>(
   return node;
 }
 
-function createHeader(datasetKind: CandidateDatasetKind): HTMLElement {
+function createHeader(
+  datasetKind: CandidateDatasetKind,
+  onAbout?: () => void,
+): HTMLElement {
   const header = element("header", "site-header");
   const inner = element("div", "site-header-inner");
   const brand = element("a", "brand", "Minha Colinha");
@@ -85,7 +91,17 @@ function createHeader(datasetKind: CandidateDatasetKind): HTMLElement {
     "project-identity",
     "Projeto independente · open source",
   );
-  inner.append(brand, identity);
+  const identityGroup = element("div", "header-identity");
+  identityGroup.append(brand, identity);
+  inner.append(identityGroup);
+  if (onAbout) {
+    const about = element("button", "about-button", "Sobre");
+    about.id = "about-button";
+    about.type = "button";
+    about.setAttribute("aria-haspopup", "dialog");
+    about.addEventListener("click", onAbout);
+    inner.append(about);
+  }
   header.append(inner);
   if (datasetKind === CANDIDATE_DATASET_KIND.DEVELOPMENT_FIXTURE) {
     const developmentBar = element("div", "development-bar");
@@ -97,6 +113,49 @@ function createHeader(datasetKind: CandidateDatasetKind): HTMLElement {
     header.append(developmentBar);
   }
   return header;
+}
+
+function createAboutDialog(
+  state: ApplicationState,
+): HTMLDialogElement {
+  const dialog = element("dialog", "about-dialog");
+  dialog.setAttribute("aria-labelledby", "about-title");
+  const content = element("div", "about-dialog-content");
+  const close = element("button", "dialog-close", "Fechar");
+  close.type = "button";
+  close.setAttribute("aria-label", "Fechar informações sobre a Minha Colinha");
+  close.addEventListener("click", () => dialog.close());
+  const title = element("h2", undefined, "Sobre a Minha Colinha");
+  title.id = "about-title";
+  const introduction = element(
+    "p",
+    undefined,
+    "A Minha Colinha é um projeto independente e open source. Não é um site oficial da Justiça Eleitoral.",
+  );
+  const data = element(
+    "p",
+    undefined,
+    "Em produção, os candidatos vêm de dados públicos do TSE preparados previamente pela aplicação.",
+  );
+  const privacyTitle = element("h3", undefined, "Privacidade, de forma simples");
+  const privacy = element("ul", "about-privacy");
+  for (const item of [
+    "Suas escolhas ficam somente na memória deste navegador.",
+    "Não há cadastro, trackers ou envio da colinha para um servidor.",
+    "A imagem é montada e baixada inteiramente no seu dispositivo.",
+  ]) {
+    privacy.append(element("li", undefined, item));
+  }
+  content.append(close, title, introduction, data, privacyTitle, privacy);
+  dialog.append(content);
+  dialog.addEventListener("close", () => {
+    state.aboutOpen = false;
+    requestAnimationFrame(() => document.getElementById("about-button")?.focus());
+  });
+  dialog.addEventListener("cancel", () => {
+    state.aboutOpen = false;
+  });
+  return dialog;
 }
 
 function createFooter(): HTMLElement {
@@ -251,42 +310,38 @@ function renderCandidateResults(
     return;
   }
 
-  const matches = searchCandidates(candidates, query);
+  const matches = visibleCandidateSearchResults(candidates, query);
 
-  if (matches.length === 0) {
+  if (matches.total === 0) {
     const empty = element("p", "empty-state", "Nenhum candidato encontrado.");
     empty.setAttribute("role", "status");
     container.append(empty);
     return;
   }
 
-  const maximumVisibleResults = 20;
-  const results = matches.slice(0, maximumVisibleResults);
-  if (matches.length > maximumVisibleResults) {
+  if (matches.total > matches.candidates.length) {
     container.append(
       element(
         "p",
         "result-limit",
-        `Mostrando 20 de ${matches.length} resultados. Refine a busca para encontrar a candidatura desejada.`,
+        `Mostrando ${matches.candidates.length} de ${matches.total} resultados. Refine a busca para encontrar a candidatura desejada.`,
       ),
     );
   }
 
   const list = element("ul", "candidate-results");
-  for (const candidate of results) {
+  for (const candidate of matches.candidates) {
     const item = element("li");
-    const card = element("article", "candidate-card");
-    const button = element(
+    const card = element(
       "button",
-      "select-candidate",
-      state.session?.selections[slot.id] ? "Substituir" : "Selecionar",
+      "candidate-card",
     );
-    button.type = "button";
-    button.setAttribute(
+    card.type = "button";
+    card.setAttribute(
       "aria-label",
-      `Selecionar ${candidate.ballotName}, número ${candidate.number}`,
+      `${state.session?.selections[slot.id] ? "Substituir por" : "Selecionar"} ${candidate.ballotName}, número ${candidate.number}, partido ${candidate.party}`,
     );
-    button.addEventListener("click", () => {
+    card.addEventListener("click", () => {
       if (!state.session) {
         return;
       }
@@ -314,7 +369,11 @@ function renderCandidateResults(
     card.append(
       createCandidatePhoto(candidate),
       createCandidateDetails(candidate),
-      button,
+      element(
+        "span",
+        "candidate-card-action",
+        state.session?.selections[slot.id] ? "Substituir" : "Selecionar",
+      ),
     );
     item.append(card);
     list.append(item);
@@ -333,8 +392,6 @@ function createSlotSection(
   const heading = element("h2", "slot-title", slot.label);
   heading.id = `slot-title-${slot.order}`;
   heading.tabIndex = -1;
-  const sequence = element("span", "slot-order", `${slot.order}ª posição`);
-  heading.prepend(sequence);
   section.append(heading);
 
   const chosen = selectedCandidate(state, slot);
@@ -421,7 +478,7 @@ function locationLabel(location: ElectoralLocation): string {
   if (location.scope === TERRITORIAL_SCOPE.MUNICIPALITY) {
     return `${location.municipalityName} (${location.uf})`;
   }
-  return STATE_NAMES[location.uf];
+  return `${STATE_NAMES[location.uf]} (${location.uf})`;
 }
 
 function formatSnapshotDate(value: string): string {
@@ -636,6 +693,7 @@ function createGeolocationOption(
           : undefined;
       resetLocationDetection(state);
       if (currentUf === suggestedUf) {
+        state.locationEditing = false;
         state.announcement = `${STATE_NAMES[suggestedUf]} já é a UF selecionada.`;
         render();
         return;
@@ -676,7 +734,7 @@ function createLocationForm(
   render: () => void,
 ): HTMLFormElement {
   const form = element("form", "location-form");
-  const label = element("label", undefined, "Onde você vota?");
+  const label = element("label", undefined, "Selecione sua UF");
   label.htmlFor = "voting-state";
   const hint = element(
     "p",
@@ -726,6 +784,7 @@ function createLocationForm(
     }
     if (selectedState.uf === currentUf) {
       resetLocationDetection(state);
+      state.locationEditing = false;
       render();
       return;
     }
@@ -755,7 +814,41 @@ async function selectState(
   state.errors = new Map();
   state.selectionErrors = new Map();
   state.editingSlots = new Set();
+  state.locationEditing = false;
   await loadCurrentCandidates(state, render, true);
+}
+
+function createLocationSection(
+  state: ApplicationState,
+  render: () => void,
+): HTMLElement {
+  const section = element("section", "location-section");
+  section.setAttribute("aria-labelledby", "location-title");
+  const title = element("h2", undefined, "Onde você vota?");
+  title.id = "location-title";
+  section.append(title);
+
+  if (state.session && !state.locationEditing) {
+    const summary = element("div", "location-summary");
+    const location = element(
+      "strong",
+      "location-summary-value",
+      locationLabel(state.session.location),
+    );
+    const change = element("button", "text-button location-change", "Alterar");
+    change.type = "button";
+    change.addEventListener("click", () => {
+      state.locationEditing = true;
+      state.announcement = "Seleção de UF aberta para alteração.";
+      render();
+      focusAfterRender("voting-state");
+    });
+    summary.append(location, change);
+    section.append(summary);
+  } else {
+    section.append(createLocationForm(state, render));
+  }
+  return section;
 }
 
 async function loadCurrentCandidates(
@@ -828,9 +921,19 @@ async function generateExport(
   render: () => void,
 ): Promise<void> {
   const session = state.session;
-  if (!session || resolvedSelectionCount(state) !== session.slots.length) {
+  if (!session || resolvedSelectionCount(state) === 0) {
     state.exportStatus = "error";
-    state.exportError = "Preencha todas as posições antes de gerar a imagem.";
+    state.exportError = "Faça pelo menos uma escolha antes de baixar a colinha.";
+    render();
+    return;
+  }
+  if (
+    state.datasetKind === CANDIDATE_DATASET_KIND.OFFICIAL_SNAPSHOT &&
+    !state.metadata
+  ) {
+    state.exportStatus = "error";
+    state.exportError =
+      "Aguarde a confirmação da data do snapshot oficial antes de baixar.";
     render();
     return;
   }
@@ -845,9 +948,13 @@ async function generateExport(
   const model = composeColinhaModel(
     session,
     candidates,
-    state.datasetKind === CANDIDATE_DATASET_KIND.DEVELOPMENT_FIXTURE
-      ? "DADOS FICTÍCIOS — DESENVOLVIMENTO — NÃO USE PARA VOTAR"
-      : null,
+    {
+      notice:
+        state.datasetKind === CANDIDATE_DATASET_KIND.DEVELOPMENT_FIXTURE
+          ? "DADOS FICTÍCIOS — DESENVOLVIMENTO — NÃO USE PARA VOTAR"
+          : null,
+      snapshotImportedAt: state.metadata?.importedAt ?? null,
+    },
   );
 
   try {
@@ -855,9 +962,19 @@ async function generateExport(
     if (requestedVersion !== state.exportVersion) {
       return;
     }
-    state.exportUrl = URL.createObjectURL(blob);
-    state.exportStatus = "ready";
-    state.announcement = "Imagem PNG pronta para baixar.";
+    const download = triggerBlobDownload(
+      blob,
+      colinhaFileName(state.election.year, session.location),
+    );
+    if (download.started) {
+      state.exportStatus = "idle";
+      state.announcement = "Download da colinha iniciado.";
+    } else {
+      state.exportUrl = download.fallbackUrl;
+      state.exportStatus = "fallback";
+      state.announcement =
+        "O download automático não começou. Use o link manual disponível.";
+    }
   } catch (error) {
     if (requestedVersion !== state.exportVersion) {
       return;
@@ -886,15 +1003,20 @@ function editSlotFromReview(
 function createExportActions(
   state: ApplicationState,
   render: () => void,
-  complete: boolean,
+  hasResolvedSelection: boolean,
 ): HTMLElement {
   const container = element("div", "export-actions");
   container.id = "export-actions";
   container.tabIndex = -1;
   container.setAttribute("aria-busy", String(state.exportStatus === "generating"));
 
-  if (state.exportStatus === "ready" && state.exportUrl && state.session) {
-    const download = element("a", "primary-button download-button", "Baixar PNG pronto");
+  if (state.exportStatus === "fallback" && state.exportUrl && state.session) {
+    const fallbackUrl = state.exportUrl;
+    const download = element(
+      "a",
+      "secondary-button download-button",
+      "O download não começou? Baixar manualmente",
+    );
     download.href = state.exportUrl;
     download.download = colinhaFileName(
       state.election.year,
@@ -902,24 +1024,22 @@ function createExportActions(
     );
     download.addEventListener("click", () => {
       state.announcement = "Download da colinha iniciado.";
-    });
-    const regenerate = element(
-      "button",
-      "secondary-button regenerate-button",
-      "Gerar novamente",
-    );
-    regenerate.type = "button";
-    regenerate.addEventListener("click", () => {
-      void generateExport(state, render);
+      window.setTimeout(() => {
+        if (state.exportUrl === fallbackUrl) {
+          URL.revokeObjectURL(fallbackUrl);
+          state.exportUrl = null;
+          state.exportStatus = "idle";
+          render();
+        }
+      }, 1_000);
     });
     container.append(
       element(
         "p",
-        "export-success",
-        "Imagem criada localmente e pronta para salvar.",
+        "export-hint",
+        "Seu navegador bloqueou o início automático do download.",
       ),
       download,
-      regenerate,
     );
     return container;
   }
@@ -927,21 +1047,37 @@ function createExportActions(
   const generate = element(
     "button",
     "primary-button generate-button",
-    state.exportStatus === "generating" ? "Gerando PNG…" : "Gerar imagem PNG",
+    state.exportStatus === "generating"
+      ? "Gerando sua colinha…"
+      : "Baixar minha colinha",
   );
   generate.type = "button";
-  generate.disabled = !complete || state.exportStatus === "generating";
+  const metadataReady =
+    state.datasetKind === CANDIDATE_DATASET_KIND.DEVELOPMENT_FIXTURE ||
+    state.metadata !== null;
+  generate.disabled =
+    !hasResolvedSelection ||
+    !metadataReady ||
+    state.exportStatus === "generating";
   generate.addEventListener("click", () => {
     void generateExport(state, render);
   });
   container.append(generate);
 
-  if (!complete) {
+  if (!hasResolvedSelection) {
     container.append(
       element(
         "p",
         "export-hint",
-        "Preencha todas as posições para liberar a geração da imagem.",
+        "Faça pelo menos uma escolha para liberar o download.",
+      ),
+    );
+  } else if (!metadataReady) {
+    container.append(
+      element(
+        "p",
+        "export-hint",
+        "Aguardando a confirmação da data dos dados oficiais.",
       ),
     );
   }
@@ -971,11 +1107,10 @@ function createReview(
     return null;
   }
 
-  const completed = selectionCount(session);
   const complete = resolvedSelectionCount(state) === session.slots.length;
+  const hasResolvedSelection = resolvedSelectionCount(state) > 0;
   const section = element("section", "review");
   section.setAttribute("aria-labelledby", "review-title");
-  const step = element("p", "step-label", "Etapa 3");
   const title = element("h2", undefined, "Revise sua colinha");
   title.id = "review-title";
   const description = element(
@@ -983,17 +1118,7 @@ function createReview(
     "review-description",
     "Confira cargo, número, nome, partido e foto antes de gerar a imagem.",
   );
-  const progressLabel = element(
-    "label",
-    "progress-label",
-    `${completed} de ${session.slots.length} escolhas preenchidas`,
-  );
-  progressLabel.htmlFor = "selection-progress";
-  const progress = element("progress", "selection-progress");
-  progress.id = "selection-progress";
-  progress.max = session.slots.length;
-  progress.value = completed;
-  section.append(step, title, description, progressLabel, progress);
+  section.append(title, description);
 
   const list = element("ol", "review-list");
   for (const slot of session.slots) {
@@ -1041,7 +1166,9 @@ function createReview(
     complete ? "review-ready" : "review-pending",
     complete
       ? "Todas as posições estão preenchidas. Sua colinha está pronta para virar imagem."
-      : "Você pode revisar agora e completar as posições restantes quando quiser.",
+      : hasResolvedSelection
+        ? "Você já pode baixar a colinha. As posições restantes aparecerão como “Não preenchido”."
+        : "Faça pelo menos uma escolha para baixar a colinha.",
   );
   status.setAttribute("role", "status");
   section.append(status);
@@ -1054,7 +1181,7 @@ function createReview(
       ),
     );
   }
-  section.append(createExportActions(state, render, complete));
+  section.append(createExportActions(state, render, hasResolvedSelection));
   return section;
 }
 
@@ -1066,27 +1193,18 @@ function renderConfiguredApplication(
   const main = element("main", "page");
   main.id = "conteudo";
 
-  const intro = element("section", "intro");
-  const eyebrow = element(
-    "p",
-    "eyebrow",
-    `Eleições Gerais de ${state.election.year}`,
+  const intro = element("section", "intro app-context");
+  const title = element(
+    "h1",
+    undefined,
+    `Sua colinha para as Eleições ${state.election.year}`,
   );
-  const title = element("h1", undefined, "Monte sua colinha eleitoral");
   const text = element(
     "p",
     "lead",
-    "Organize suas escolhas na ordem da urna e revise tudo em um só lugar. Sem cadastro e sem enviar sua colinha para um servidor.",
+    "Escolha sua UF e organize candidatos na ordem oficial de votação.",
   );
-  const benefits = element("ul", "intro-benefits");
-  for (const benefit of [
-    "Escolhas somente na memória deste navegador",
-    "Ordem oficial de votação configurada para 2026",
-    "Dados oficiais normalizados e auditáveis",
-  ]) {
-    benefits.append(element("li", undefined, benefit));
-  }
-  intro.append(eyebrow, title, text, benefits, createDataSource(state));
+  intro.append(title, text, createDataSource(state));
   if (state.datasetKind === CANDIDATE_DATASET_KIND.DEVELOPMENT_FIXTURE) {
     const fixtureNotice = element("div", "fixture-notice");
     fixtureNotice.setAttribute("role", "note");
@@ -1099,18 +1217,7 @@ function renderConfiguredApplication(
     intro.append(fixtureNotice);
   }
 
-  const locationSection = element("section", "location-section");
-  locationSection.setAttribute("aria-labelledby", "location-title");
-  const locationStep = element("p", "step-label", "Etapa 1");
-  const locationTitle = element("h2", undefined, "Circunscrição eleitoral");
-  locationTitle.id = "location-title";
-  locationSection.append(
-    locationStep,
-    locationTitle,
-    createLocationForm(state, render),
-  );
-
-  main.append(intro, locationSection);
+  main.append(intro, createLocationSection(state, render));
 
   if (state.session) {
     const slotsHeader = element("div", "slots-header");
@@ -1119,7 +1226,6 @@ function renderConfiguredApplication(
     choicesTitle.id = "choices-title";
     choicesTitle.tabIndex = -1;
     slotsHeader.append(
-      element("p", "step-label", "Etapa 2"),
       choicesTitle,
       element(
         "p",
@@ -1132,6 +1238,14 @@ function renderConfiguredApplication(
         `${completed} de ${state.session.slots.length} preenchidas`,
       ),
     );
+    const progress = element("progress", "selection-progress compact-progress");
+    progress.max = state.session.slots.length;
+    progress.value = completed;
+    progress.setAttribute(
+      "aria-label",
+      `${completed} de ${state.session.slots.length} escolhas preenchidas`,
+    );
+    slotsHeader.append(progress);
     const slots = element("div", "slots");
     for (const slot of state.session.slots) {
       slots.append(createSlotSection(slot, state, render));
@@ -1145,12 +1259,20 @@ function renderConfiguredApplication(
 
   const announcement = element("p", "sr-only", state.announcement);
   announcement.setAttribute("aria-live", "polite");
+  const dialog = createAboutDialog(state);
   root.replaceChildren(
-    createHeader(state.datasetKind),
+    createHeader(state.datasetKind, () => {
+      state.aboutOpen = true;
+      render();
+    }),
     main,
     createFooter(),
     announcement,
+    dialog,
   );
+  if (state.aboutOpen && !dialog.open) {
+    dialog.showModal();
+  }
 }
 
 export function mountApplication(
@@ -1193,6 +1315,8 @@ export function mountApplication(
     exportUrl: null,
     exportError: null,
     exportVersion: 0,
+    aboutOpen: true,
+    locationEditing: true,
   };
   window.addEventListener(
     "beforeunload",

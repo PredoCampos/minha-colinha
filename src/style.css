@@ -2,8 +2,8 @@
   color: #18231d;
   background: #f4f3ed;
   font-family:
-    Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
-    sans-serif;
+    "Atkinson Hyperlegible Next", "Atkinson Hyperlegible", ui-sans-serif,
+    system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
 }
@@ -93,6 +93,13 @@ a {
   gap: 1rem;
 }
 
+.header-identity {
+  display: flex;
+  min-width: 0;
+  align-items: baseline;
+  gap: 0.75rem;
+}
+
 .brand {
   color: #173f2d;
   font-size: 1.12rem;
@@ -107,6 +114,76 @@ a {
   font-size: 0.8rem;
 }
 
+.about-button {
+  min-height: 2.5rem;
+  padding: 0.45rem 0.75rem;
+  border: 1px solid #65736a;
+  border-radius: 0.35rem;
+  color: #26352d;
+  background: #fffef9;
+  font-size: 0.86rem;
+  font-weight: 750;
+}
+
+.about-dialog {
+  width: min(calc(100% - 2rem), 34rem);
+  max-height: min(42rem, calc(100dvh - 2rem));
+  padding: 0;
+  overflow: auto;
+  border: 1px solid #aeb7b0;
+  border-radius: 0.65rem;
+  color: #18231d;
+  background: #fffef9;
+  box-shadow: 0 1.5rem 5rem rgb(14 23 18 / 35%);
+}
+
+.about-dialog::backdrop {
+  background: rgb(13 20 16 / 68%);
+  backdrop-filter: blur(0.12rem);
+}
+
+.about-dialog-content {
+  position: relative;
+  padding: clamp(1.35rem, 5vw, 2rem);
+}
+
+.about-dialog h2 {
+  max-width: calc(100% - 4rem);
+  margin-bottom: 1rem;
+  font-size: clamp(1.55rem, 5vw, 2rem);
+}
+
+.about-dialog h3 {
+  margin: 1.35rem 0 0.6rem;
+  font-size: 1rem;
+}
+
+.about-dialog p,
+.about-privacy {
+  color: #455249;
+  line-height: 1.55;
+}
+
+.about-privacy {
+  display: grid;
+  gap: 0.5rem;
+  margin-bottom: 0;
+  padding-left: 1.25rem;
+}
+
+.dialog-close {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  min-height: 2.5rem;
+  padding-inline: 0.7rem;
+  border: 0;
+  border-radius: 0.35rem;
+  color: #234b38;
+  background: #eef1ed;
+  font-weight: 750;
+}
+
 .development-bar {
   padding: 0.38rem 1rem;
   color: #4b3119;
@@ -117,12 +194,12 @@ a {
 }
 
 .page {
-  padding-block: clamp(2.25rem, 7vw, 5rem) 5rem;
+  padding-block: clamp(1.25rem, 4vw, 2.5rem) 5rem;
 }
 
 .intro {
   max-width: 50rem;
-  margin-bottom: clamp(2.5rem, 7vw, 4.5rem);
+  margin-bottom: 1.25rem;
 }
 
 .eyebrow,
@@ -142,19 +219,23 @@ p {
 }
 
 h1 {
-  max-width: 14ch;
-  margin-bottom: 1rem;
-  font-size: clamp(2.5rem, 9vw, 5rem);
-  line-height: 0.98;
-  letter-spacing: -0.05em;
+  margin-bottom: 0.45rem;
+  font-size: clamp(1.65rem, 6vw, 2.5rem);
+  line-height: 1.08;
+  letter-spacing: -0.035em;
 }
 
 .lead {
   max-width: 43rem;
-  margin-bottom: 1.25rem;
+  margin-bottom: 0.8rem;
   color: #435148;
   font-size: clamp(1.05rem, 2.6vw, 1.25rem);
   line-height: 1.55;
+}
+
+.app-context {
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #d8dbd5;
 }
 
 .intro-benefits {
@@ -181,6 +262,7 @@ h1 {
 }
 
 .fixture-notice {
+  margin-top: 0.9rem;
   padding: 1rem;
   border: 1px solid #d58a43;
   border-radius: 0.65rem;
@@ -209,12 +291,29 @@ h1 {
 
 .location-section {
   max-width: 46rem;
-  margin-bottom: 4rem;
+  margin-bottom: 2.75rem;
   padding: 1.25rem;
   border: 1px solid #d0d4cc;
   border-radius: 0.85rem;
   background: #fffef9;
   box-shadow: 0 0.5rem 2rem rgb(31 45 36 / 5%);
+}
+
+.location-summary {
+  display: flex;
+  min-height: 3.25rem;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-top: 0.8rem;
+  padding: 0.7rem 0.8rem;
+  border: 2px solid #56675d;
+  border-radius: 0.45rem;
+  background: #f6f7f3;
+}
+
+.location-summary-value {
+  font-size: 1.05rem;
 }
 
 .location-section h2,
@@ -330,7 +429,6 @@ select {
 }
 
 .primary-button,
-.select-candidate,
 .secondary-button,
 .text-button {
   border-radius: 0.5rem;
@@ -338,7 +436,7 @@ select {
 }
 
 .primary-button,
-.select-candidate {
+.candidate-card-action {
   border: 1px solid #173f2d;
   color: #fff;
   background: #173f2d;
@@ -381,6 +479,13 @@ select {
   font-weight: 750;
 }
 
+.compact-progress {
+  max-width: 46rem;
+  height: 0.55rem;
+  margin: 0.75rem 0 0;
+  accent-color: #35644f;
+}
+
 .slots {
   display: grid;
   gap: 1.25rem;
@@ -396,7 +501,8 @@ select {
 }
 
 .slot[data-office="SENATOR"] {
-  border-left: 0.3rem solid #637d70;
+  border-left: 0.38rem solid #637d70;
+  background: #fbfcf8;
 }
 
 .slot-title {
@@ -406,14 +512,6 @@ select {
   margin-bottom: 1.25rem;
   font-size: clamp(1.25rem, 4vw, 1.55rem);
   letter-spacing: -0.015em;
-}
-
-.slot-order {
-  color: #68736c;
-  font-size: 0.72rem;
-  font-weight: 800;
-  letter-spacing: 0.075em;
-  text-transform: uppercase;
 }
 
 .selected-candidate,
@@ -527,15 +625,39 @@ select {
 }
 
 .candidate-card {
+  width: 100%;
   padding: 0.8rem;
   border: 1px solid #d2d6cf;
   border-radius: 0.65rem;
+  color: #18231d;
   background: #fff;
+  text-align: left;
+  box-shadow: 0 0.18rem 0 #c8cec9;
+  transition:
+    border-color 120ms ease,
+    box-shadow 120ms ease,
+    transform 120ms ease;
 }
 
-.select-candidate {
+.candidate-card:hover {
+  border-color: #4d685a;
+  box-shadow: 0 0.22rem 0 #7f9488;
+  filter: none;
+}
+
+.candidate-card:active {
+  box-shadow: 0 0.05rem 0 #7f9488;
+  transform: translateY(0.12rem);
+}
+
+.candidate-card-action {
   grid-column: 1 / -1;
-  padding: 0.62rem 1rem;
+  justify-self: start;
+  padding: 0.42rem 0.65rem;
+  border: 1px solid #173f2d;
+  border-radius: 0.35rem;
+  font-size: 0.78rem;
+  font-weight: 800;
 }
 
 .retry-button {
@@ -815,7 +937,7 @@ button:hover {
     grid-template-columns: 4.6rem minmax(0, 1fr) auto;
   }
 
-  .select-candidate {
+  .candidate-card-action {
     grid-column: auto;
     padding-inline: 1.2rem;
   }

@@ -2,9 +2,10 @@ import { describe, expect, it } from "vitest";
 import { CANDIDATE_STATUS } from "../../src/candidates/model.ts";
 import { ELECTORAL_OFFICE } from "../../src/election/types.ts";
 import {
+  mapTseCandidacyStatus,
   mapTseJudgmentStatus,
   mapTseOffice,
-  validateObservedCandidacyStatus,
+  resolveTseCandidateStatus,
 } from "./mappings.ts";
 
 describe("mapeamentos explícitos do TSE 2026", () => {
@@ -43,10 +44,30 @@ describe("mapeamentos explícitos do TSE 2026", () => {
     );
   });
 
-  it("aceita apenas a situação geral concretamente observada", () => {
-    expect(() => validateObservedCandidacyStatus("-3", "#NE")).not.toThrow();
-    expect(() => validateObservedCandidacyStatus("12", "APTO")).toThrow(
-      /ainda não mapeada/,
+  it("não trata o único valor geral observado em 2026 como situação eleitoral", () => {
+    expect(mapTseCandidacyStatus("-3", "#NE")).toBeNull();
+    expect(() => mapTseCandidacyStatus("12", "APTO")).toThrow(
+      /Situação geral de candidatura TSE desconhecida/,
+    );
+    expect(() => mapTseCandidacyStatus("99", "NOVA")).toThrow(
+      /Situação geral de candidatura TSE desconhecida/,
+    );
+  });
+
+  it("resolve o ciclo 2026 a partir do julgamento complementar", () => {
+    expect(resolveTseCandidateStatus("-3", "#NE", "2", "DEFERIDO")).toBe(
+      CANDIDATE_STATUS.DISPLAYABLE,
+    );
+    expect(
+      resolveTseCandidateStatus(
+        "-3",
+        "#NE",
+        "4",
+        "INDEFERIDO EM PRAZO RECURSAL OU COM RECURSO",
+      ),
+    ).toBe(CANDIDATE_STATUS.PENDING_OR_AMBIGUOUS);
+    expect(resolveTseCandidateStatus("-3", "#NE", "6", "RENÚNCIA")).toBe(
+      CANDIDATE_STATUS.NOT_DISPLAYABLE,
     );
   });
 });

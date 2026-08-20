@@ -70,7 +70,7 @@ flowchart LR
     F --> G[Guardar seleção somente em memória]
 ```
 
-Para listas muito grandes, a UI pode exigir um número mínimo de caracteres antes de exibir muitos resultados, desde que isso não prejudique a busca por número.
+A busca ignora caixa e acentos. Cada termo textual precisa ser prefixo de alguma palavra do nome de urna; a consulta numérica precisa ser prefixo do número eleitoral. A lista mostra no máximo 20 resultados depois de filtrar toda a coleção, em ordem determinística.
 
 ## 5. Fluxo específico de 2026
 
@@ -100,9 +100,9 @@ flowchart TD
 1. usuário abre a revisão;
 2. aplicação ordena os slots conforme a configuração eleitoral;
 3. para cada slot preenchido, compõe cargo, fotografia, número, nome e partido;
-4. posições não preenchidas permanecem claramente vazias, se exportação parcial for permitida;
+4. a partir de uma escolha, posições não preenchidas permanecem claramente marcadas como `Não preenchido`;
 5. composição é renderizada localmente;
-6. arquivo é disponibilizado ao usuário;
+6. um único comando gera e inicia o download; um link manual aparece somente se o navegador bloquear esse início;
 7. nenhuma requisição com o conteúdo da colinha é feita.
 
 ## 8. Alteração da circunscrição
