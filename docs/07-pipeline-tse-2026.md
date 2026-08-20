@@ -115,4 +115,4 @@ O ambiente precisa de `tar.exe` no Windows ou `unzip` em Unix. Todos os download
 
 `metadata.json` registra origem, geração TSE, importação, versão do pipeline, URLs, hashes, tamanhos, `Last-Modified` quando disponível e contagens de status/fotos.
 
-O workflow `update-tse-data.yml` está preparado para execução diária às 05:23 BRT e manual. Havendo mudança válida, atualiza uma branch isolada e abre PR; falhas preservam o snapshot vigente.
+`public/data/2026/` é um artefato gerado e ignorado pelo Git. O workflow `deploy-pages.yml` roda em pushes para `main`, diariamente às 05:23 BRT e por `workflow_dispatch`. Ele gera e valida o snapshot, executa os checks e o build, confirma que os 109 arquivos de candidatos, os metadados e as fotografias chegaram a `dist` e somente então publica o artefato do Pages. Não há commit automático, branch de atualização nem PR contendo dados ou fotografias. Falhas interrompem o job antes do upload/deploy, preservando a última publicação válida.

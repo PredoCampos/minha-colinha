@@ -4,6 +4,7 @@ coverage/
 .tmp/
 .cache/
 downloads/
+public/data/2026/
 public/data/.2026-stage-*/
 public/data/.2026-backup-*/
 consulta_cand_*.csv

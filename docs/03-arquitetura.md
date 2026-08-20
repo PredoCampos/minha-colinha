@@ -191,18 +191,15 @@ Pipeline sugerido:
 
 ```mermaid
 flowchart LR
-    S[Agendamento diário] --> F[Fetch TSE/IBGE quando aplicável]
+    T[Push, agendamento diário ou execução manual] --> F[Fetch TSE/IBGE quando aplicável]
     F --> N[Normalizar]
     N --> V[Validar]
-    V --> D{Mudou?}
-    D -->|não| E[Fim]
-    D -->|sim| PR[Gerar PR de dados]
-    PR --> CI[Testes + checks]
-    CI --> M[Merge]
-    M --> DEP[Deploy estático]
+    V --> B[Build com snapshot validado]
+    B --> A[Verificar artefato completo]
+    A --> DEP[Publicar artefato do Pages]
 ```
 
-Para máxima auditabilidade, atualizações automáticas de dados devem preferir PR com diff revisável em vez de commit direto na branch de produção.
+O código do pipeline, seus mapeamentos e testes são versionados. O snapshot oficial de 2026 é gerado no runner, permanece fora do Git e entra apenas no artefato final do Pages. Nenhuma etapa de geração cria commit ou PR. Se download, interpretação, validação, build ou verificação do artefato falhar, as etapas de upload e publicação não são executadas e o último deploy válido permanece disponível.
 
 ## 8. Dependências externas em runtime
 

@@ -20,3 +20,4 @@ Cada ADR contém:
 - [ADR-004 — Geolocalização com resolução territorial local](004-geolocalizacao-local.md)
 - [ADR-005 — Configuração eleitoral declarativa](005-configuracao-eleitoral-declarativa.md)
 - [ADR-006 — Fotografias oficiais como dado essencial](006-fotos-oficiais.md)
+- [ADR-007 — Snapshot oficial gerado no deploy](007-snapshot-gerado-no-deploy.md)

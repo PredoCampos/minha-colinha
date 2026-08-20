@@ -106,7 +106,7 @@ As malhas podem ser derivadas da Malha Municipal Digital do IBGE e simplificadas
 
 - fonte oficial identificada;
 - pipeline determinístico;
-- PR revisável para atualização de dados;
+- pipeline e mapeamentos revisáveis no Git;
 - validação de schema e invariantes;
 - hashes/versões de snapshot;
 - branch protection;
@@ -122,7 +122,7 @@ As malhas podem ser derivadas da Malha Municipal Digital do IBGE e simplificadas
 - poucas dependências;
 - lockfile versionado;
 - versões fixadas;
-- atualização por PR;
+- revisão por PR das mudanças de código e infraestrutura;
 - auditoria automatizada;
 - evitar scripts runtime por CDN;
 - CSP restritiva.
