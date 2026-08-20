@@ -1,19 +1,28 @@
 import type { Candidate } from "../candidates/model.ts";
 import { isCandidateSelectable } from "../candidates/availability.ts";
-import type { ElectionConfig, ElectoralLocation, VotingSlotId } from "../election/types.ts";
-import { selectCandidate } from "../election/selections.ts";
+import type {
+  ElectionConfig,
+  ElectionRoundConfig,
+  ElectionRoundId,
+  ElectoralLocation,
+  NonCandidateVoteChoice,
+  VotingSlotId,
+} from "../election/types.ts";
+import { VOTE_CHOICE_TYPE } from "../election/types.ts";
+import { selectVoteChoice } from "../election/selections.ts";
 import { generateVotingSlots } from "../election/slots.ts";
 import type {
-  CandidateSelections,
   SelectionError,
+  VoteSelections,
   VotingSlot,
 } from "../election/index.ts";
 
 export interface SelectionSession {
   readonly election: ElectionConfig;
+  readonly round: ElectionRoundConfig;
   readonly location: ElectoralLocation;
   readonly slots: readonly VotingSlot[];
-  readonly selections: CandidateSelections;
+  readonly selections: VoteSelections;
 }
 
 export type SessionSelectionResult =
@@ -32,11 +41,17 @@ export type SessionSelectionResult =
 export function startSelectionSession(
   election: ElectionConfig,
   location: ElectoralLocation,
+  roundId: ElectionRoundId = election.defaultRoundId,
 ): SelectionSession {
+  const round = election.rounds.find(({ id }) => id === roundId);
+  if (!round) {
+    throw new Error(`O turno ${roundId} não existe na eleição de ${election.year}.`);
+  }
   return {
     election,
+    round,
     location,
-    slots: generateVotingSlots(election, location),
+    slots: generateVotingSlots(election, location, roundId),
     selections: {},
   };
 }
@@ -45,7 +60,7 @@ export function changeSelectionLocation(
   session: SelectionSession,
   location: ElectoralLocation,
 ): SelectionSession {
-  return startSelectionSession(session.election, location);
+  return startSelectionSession(session.election, location, session.round.id);
 }
 
 export function selectCandidateInSession(
@@ -64,8 +79,9 @@ export function selectCandidateInSession(
     };
   }
 
-  const result = selectCandidate(session.slots, session.selections, slotId, {
-    id: candidate.id,
+  const result = selectVoteChoice(session.slots, session.selections, slotId, {
+    type: VOTE_CHOICE_TYPE.CANDIDATE,
+    candidateId: candidate.id,
     office: candidate.office,
   });
 
@@ -74,5 +90,21 @@ export function selectCandidateInSession(
         ok: true,
         session: { ...session, selections: result.selections },
       }
+    : result;
+}
+
+export function selectNonCandidateInSession(
+  session: SelectionSession,
+  slotId: VotingSlotId,
+  choice: NonCandidateVoteChoice,
+): SessionSelectionResult {
+  const result = selectVoteChoice(
+    session.slots,
+    session.selections,
+    slotId,
+    choice,
+  );
+  return result.ok
+    ? { ok: true, session: { ...session, selections: result.selections } }
     : result;
 }

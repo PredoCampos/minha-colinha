@@ -29,6 +29,24 @@ export const ELECTORAL_OFFICE = {
 export type ElectoralOffice =
   (typeof ELECTORAL_OFFICE)[keyof typeof ELECTORAL_OFFICE];
 
+export const ELECTION_ROUND = {
+  FIRST: "FIRST",
+  SECOND: "SECOND",
+} as const;
+
+export type ElectionRoundId =
+  (typeof ELECTION_ROUND)[keyof typeof ELECTION_ROUND];
+
+export const VOTE_CHOICE_TYPE = {
+  CANDIDATE: "CANDIDATE",
+  PARTY: "PARTY",
+  BLANK: "BLANK",
+  NULL: "NULL",
+} as const;
+
+export type VoteChoiceType =
+  (typeof VOTE_CHOICE_TYPE)[keyof typeof VOTE_CHOICE_TYPE];
+
 export const FEDERATIVE_UNITS = [
   "AC",
   "AL",
@@ -82,6 +100,7 @@ export interface OfficeConfig {
   readonly order: number;
   readonly scope: TerritorialScope;
   readonly requireDistinctCandidates: boolean;
+  readonly allowPartyVote: boolean;
 }
 
 export interface TerritorialOfficeReplacement {
@@ -95,11 +114,19 @@ export interface ElectionRuleSource {
   readonly url: string;
 }
 
+export interface ElectionRoundConfig {
+  readonly id: ElectionRoundId;
+  readonly label: string;
+  readonly date: `${number}-${number}-${number}`;
+  readonly offices: readonly OfficeConfig[] | null;
+}
+
 export interface ElectionConfig {
   readonly year: number;
   readonly type: ElectionType;
   readonly locationScope: TerritorialScope;
-  readonly offices: readonly OfficeConfig[];
+  readonly defaultRoundId: ElectionRoundId;
+  readonly rounds: readonly ElectionRoundConfig[];
   readonly territorialExceptions: readonly TerritorialOfficeReplacement[];
   readonly ruleSources: readonly ElectionRuleSource[];
 }
@@ -114,15 +141,34 @@ export interface VotingSlot {
   readonly scope: TerritorialScope;
   readonly label: string;
   readonly requireDistinctCandidates: boolean;
+  readonly allowPartyVote: boolean;
 }
 
 export type CandidateId = string;
 
 export interface CandidateChoice {
-  readonly id: CandidateId;
+  readonly type: typeof VOTE_CHOICE_TYPE.CANDIDATE;
+  readonly candidateId: CandidateId;
   readonly office: ElectoralOffice;
 }
 
-export type CandidateSelections = Readonly<
-  Partial<Record<VotingSlotId, CandidateId>>
+export interface PartyChoice {
+  readonly type: typeof VOTE_CHOICE_TYPE.PARTY;
+  readonly party: string;
+  readonly partyNumber: string;
+}
+
+export interface BlankChoice {
+  readonly type: typeof VOTE_CHOICE_TYPE.BLANK;
+}
+
+export interface NullChoice {
+  readonly type: typeof VOTE_CHOICE_TYPE.NULL;
+}
+
+export type NonCandidateVoteChoice = PartyChoice | BlankChoice | NullChoice;
+export type VoteChoice = CandidateChoice | NonCandidateVoteChoice;
+
+export type VoteSelections = Readonly<
+  Partial<Record<VotingSlotId, VoteChoice>>
 >;

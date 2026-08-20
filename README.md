@@ -20,9 +20,10 @@ Em um ano eleitoral suportado, a aplicação:
 2. determina se precisa de UF ou de UF + município;
 3. permite preencher essa informação manualmente ou sugeri-la por geolocalização, sempre com confirmação do usuário;
 4. carrega somente os candidatos pertinentes à circunscrição e aos cargos da eleição;
-5. permite localizar candidatos pelo início de palavras do nome ou pelo início do número, mostrando foto oficial, número, nome de urna e partido;
-6. monta a colinha na ordem oficial de votação;
-7. baixa uma imagem no próprio navegador; posições não escolhidas são identificadas como não preenchidas.
+5. apresenta candidaturas em ordem neutra, com busca por prefixo e filtro de partido;
+6. permite registrar candidatura, legenda quando legalmente aplicável, branco ou nulo;
+7. monta a colinha na ordem oficial de votação;
+8. baixa ou, quando suportado pelo navegador, compartilha a imagem gerada localmente; posições não escolhidas podem aparecer como não preenchidas ou ser omitidas por opção do usuário.
 
 Em anos sem eleição suportada, a aplicação apenas informa que não há pleito configurado e pode indicar a próxima eleição prevista na configuração do projeto.
 

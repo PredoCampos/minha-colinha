@@ -1,6 +1,7 @@
 import { officeLabel } from "./offices.ts";
 import {
   type ElectionConfig,
+  type ElectionRoundId,
   type ElectoralLocation,
   type OfficeConfig,
   TERRITORIAL_SCOPE,
@@ -46,10 +47,18 @@ function slotLabel(config: OfficeConfig, choiceNumber: number): string {
 export function generateVotingSlots(
   election: ElectionConfig,
   location: ElectoralLocation,
+  roundId: ElectionRoundId = election.defaultRoundId,
 ): readonly VotingSlot[] {
   assertCompatibleLocation(election, location);
+  const round = election.rounds.find(({ id }) => id === roundId);
+  if (!round) {
+    throw new Error(`O turno ${roundId} não existe na eleição de ${election.year}.`);
+  }
+  if (!round.offices) {
+    throw new Error(`As disputas de ${round.label} ainda não foram configuradas.`);
+  }
 
-  const orderedOffices = [...election.offices].sort(
+  const orderedOffices = [...round.offices].sort(
     (first, second) => first.order - second.order,
   );
   const slots: VotingSlot[] = [];
@@ -66,6 +75,7 @@ export function generateVotingSlots(
         scope: office.scope,
         label: slotLabel(office, choiceNumber),
         requireDistinctCandidates: office.requireDistinctCandidates,
+        allowPartyVote: office.allowPartyVote,
       });
     }
   }

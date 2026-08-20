@@ -26,6 +26,8 @@ Recorte territorial necessário para determinar quais candidaturas são relevant
 
 Escolha local feita pelo usuário para uma posição da colinha. Não é voto e não deve ser transmitida ao servidor.
 
+Uma seleção é representada explicitamente como candidatura, legenda, branco ou nulo. Branco, nulo e legenda não são candidatos sintéticos.
+
 ## 3. Determinação da eleição
 
 **RN-001.** Ao iniciar, a aplicação consulta a configuração local das eleições suportadas para o ano civil corrente.
@@ -73,6 +75,12 @@ Escolha local feita pelo usuário para uma posição da colinha. Não é voto e 
 
 **RN-024.** O candidato a Presidente é nacional; não deve variar segundo a UF escolhida.
 
+**RN-025.** A eleição declara rodadas e datas. Em 2026, o primeiro turno ocorre em 4 de outubro e o eventual segundo turno em 25 de outubro. As disputas do segundo turno só podem ser configuradas depois de conhecidas oficialmente.
+
+**RN-026.** Voto de legenda é permitido somente para Deputado Federal e Deputado Estadual ou Distrital. É proibido para Senador, Governador e Presidente.
+
+**RN-027.** Branco e nulo registram apenas a intenção correspondente; a aplicação não sugere número para produzir voto nulo.
+
 ## 6. Candidatos
 
 **RN-030.** Candidatos apresentados devem ter origem nos dados oficiais normalizados e validados.
@@ -109,6 +117,10 @@ Escolha local feita pelo usuário para uma posição da colinha. Não é voto e 
 
 **RN-044.** A seleção deve exibir foto, número, nome de urna, partido e cargo de forma suficientemente clara para confirmação visual.
 
+**RN-045.** Sem busca ou filtro, a aplicação apresenta os primeiros 20 candidatos em ordem numérica e nominal determinística. “Mostrar mais” acrescenta os próximos 20, sem rolagem infinita.
+
+**RN-046.** O filtro de partido é extraído dos candidatos carregados, ordenado deterministicamente e combinado com a busca textual.
+
 ## 8. Estado da colinha
 
 **RN-050.** O estado da colinha existe somente na memória da página por padrão.
@@ -127,7 +139,7 @@ Escolha local feita pelo usuário para uma posição da colinha. Não é voto e 
 
 **RN-061.** A imagem final deve preservar a ordem dos cargos definida na eleição.
 
-**RN-062.** Para cada posição preenchida, a imagem deve incluir pelo menos:
+**RN-062.** Para candidatura, a imagem deve incluir pelo menos:
 
 - cargo;
 - foto do candidato;
@@ -135,9 +147,15 @@ Escolha local feita pelo usuário para uma posição da colinha. Não é voto e 
 - nome de urna;
 - partido.
 
+Para legenda, deve incluir número, sigla e a indicação `VOTO DE LEGENDA`. Branco e nulo devem ser identificados somente como `BRANCO` e `NULO`.
+
 **RN-063.** A geração da imagem não deve requerer upload da composição ou das escolhas.
 
 **RN-064.** O layout deve priorizar legibilidade do número, usando a fotografia como confirmação visual.
+
+**RN-065.** Quando o navegador suportar Web Share com arquivos, a mesma imagem pode ser preparada localmente e compartilhada como `File` após uma segunda ação explícita, preservando a ativação exigida pelo navegador. Cancelamento não é erro; sem suporte, o download permanece disponível.
+
+**RN-066.** Compartilhar o projeto transmite apenas a URL pública. Escolhas nunca entram em URL, query string, hash ou clipboard automático.
 
 ## 10. Atualização dos dados
 

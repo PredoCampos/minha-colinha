@@ -39,12 +39,14 @@ function archiveCommand(
     : ["unzip", ["-q", archivePath, ...(entry ? [entry] : []), "-d", destination ?? ""]];
 }
 
-function assertSafeEntry(entry: string): void {
+export function assertSafeEntry(entry: string): void {
   const normalized = entry.replaceAll("\\", "/");
+  const segments = normalized.split("/");
   if (
     normalized.startsWith("/") ||
     /^[a-z]:\//i.test(normalized) ||
-    normalized.split("/").includes("..")
+    segments.includes("..") ||
+    segments.some((segment) => segment.startsWith("-"))
   ) {
     throw new Error(`Entrada insegura no ZIP do TSE: ${entry}.`);
   }

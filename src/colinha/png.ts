@@ -1,4 +1,5 @@
 import { publicPath } from "../shared/paths.ts";
+import { VOTE_CHOICE_TYPE } from "../election/types.ts";
 import { calculateColinhaLayout, type Rectangle } from "./layout.ts";
 import type { ColinhaModel, ColinhaRow } from "./model.ts";
 
@@ -188,10 +189,38 @@ function drawRow(
     rectangle.y + 47,
   );
 
-  if (!row.candidate) {
+  if (!row.choice) {
     context.fillStyle = "#69736d";
     context.font = "600 32px system-ui, sans-serif";
     context.fillText("Não preenchido", rectangle.x + 78, rectangle.y + 137);
+    return;
+  }
+
+  if (
+    row.choice.type === VOTE_CHOICE_TYPE.BLANK ||
+    row.choice.type === VOTE_CHOICE_TYPE.NULL
+  ) {
+    context.fillStyle = "#173f2d";
+    context.font = "900 52px system-ui, sans-serif";
+    context.fillText(
+      row.choice.type === VOTE_CHOICE_TYPE.BLANK ? "BRANCO" : "NULO",
+      rectangle.x + 78,
+      rectangle.y + 148,
+    );
+    return;
+  }
+
+  if (row.choice.type === VOTE_CHOICE_TYPE.PARTY) {
+    const textX = rectangle.x + 78;
+    context.fillStyle = "#123b27";
+    context.font = "900 76px system-ui, sans-serif";
+    context.fillText(row.choice.partyNumber, textX, rectangle.y + 135);
+    context.fillStyle = "#18231d";
+    context.font = "800 31px system-ui, sans-serif";
+    context.fillText(row.choice.party, textX, rectangle.y + 178);
+    context.fillStyle = "#536057";
+    context.font = "700 22px system-ui, sans-serif";
+    context.fillText("VOTO DE LEGENDA", textX, rectangle.y + 214);
     return;
   }
 
@@ -210,18 +239,18 @@ function drawRow(
   const textX = rectangle.x + 176;
   context.fillStyle = "#123b27";
   context.font = "900 76px system-ui, sans-serif";
-  context.fillText(row.candidate.number, textX, rectangle.y + 133);
+  context.fillText(row.choice.number, textX, rectangle.y + 133);
   context.fillStyle = "#18231d";
   context.font = "800 31px system-ui, sans-serif";
   context.fillText(
-    fitText(context, row.candidate.ballotName, rectangle.width - 210),
+    fitText(context, row.choice.ballotName, rectangle.width - 210),
     textX,
     rectangle.y + 174,
   );
   context.fillStyle = "#536057";
   context.font = "600 24px system-ui, sans-serif";
-  context.fillText(row.candidate.party, textX, rectangle.y + 204);
-  if (row.candidate.pendingOrAmbiguous) {
+  context.fillText(row.choice.party, textX, rectangle.y + 204);
+  if (row.choice.pendingOrAmbiguous) {
     context.fillStyle = "#785513";
     context.font = "700 19px system-ui, sans-serif";
     context.fillText(
@@ -263,7 +292,10 @@ function loadPhoto(path: string): Promise<HTMLImageElement> {
 async function loadPhotos(model: ColinhaModel): Promise<readonly LoadedPhoto[]> {
   return Promise.all(
     model.rows.map(async (row) => {
-      const path = row.candidate?.photoPath;
+      const path =
+        row.choice?.type === VOTE_CHOICE_TYPE.CANDIDATE
+          ? row.choice.photoPath
+          : null;
       if (!path) {
         return null;
       }

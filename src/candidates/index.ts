@@ -44,10 +44,14 @@ export {
 export type { CandidateBatch, CandidateFileLoader } from "./batch.ts";
 export {
   MAX_VISIBLE_CANDIDATE_RESULTS,
+  candidatePartyOptions,
   searchCandidates,
   visibleCandidateSearchResults,
 } from "./search.ts";
-export type { CandidateSearchPage } from "./search.ts";
+export type {
+  CandidatePartyOption,
+  CandidateSearchPage,
+} from "./search.ts";
 export type {
   ValidationIssue,
   ValidationResult,

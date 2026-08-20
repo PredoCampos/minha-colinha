@@ -30,8 +30,14 @@ classDiagram
       +year: number
       +type: ElectionType
       +locationScope: LocationScope
-      +offices: OfficeConfig[]
+      +rounds: ElectionRound[]
       +source: SourceMetadata
+    }
+
+    class ElectionRound {
+      +id: RoundId
+      +date: string
+      +offices: OfficeConfig[]?
     }
 
     class OfficeConfig {
@@ -69,7 +75,8 @@ classDiagram
       +sourceUrl: string
     }
 
-    Election "1" --> "many" OfficeConfig
+    Election "1" --> "many" ElectionRound
+    ElectionRound "1" --> "many" OfficeConfig
     OfficeConfig "1" --> "many" Candidate
     Candidate --> Jurisdiction
     Election --> SourceMetadata
@@ -169,14 +176,20 @@ Seleção **não é artefato persistido**.
 Pode existir apenas como estrutura em memória:
 
 ```ts
+type VoteChoice =
+  | { type: "CANDIDATE"; candidateId: string; office: OfficeType }
+  | { type: "PARTY"; party: string; partyNumber: string }
+  | { type: "BLANK" }
+  | { type: "NULL" };
+
 interface GlueState {
   electionYear: number;
   jurisdiction: UserJurisdiction;
-  selections: Record<SelectionSlotId, CandidateId | null>;
+  selections: Partial<Record<SelectionSlotId, VoteChoice>>;
 }
 ```
 
-`SelectionSlotId` diferencia, por exemplo, `SENATOR_1` e `SENATOR_2`.
+`SelectionSlotId` diferencia, por exemplo, `SENATOR_1` e `SENATOR_2`. A regra de distinção compara `candidateId` apenas quando ambos os slots contêm `CANDIDATE`.
 
 Essa estrutura não deve ser serializada automaticamente para storage ou enviada por rede.
 

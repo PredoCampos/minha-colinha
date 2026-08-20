@@ -5,7 +5,8 @@ import { ELECTION_2026 } from "../election/elections.ts";
 import {
   ELECTORAL_OFFICE,
   TERRITORIAL_SCOPE,
-  type CandidateSelections,
+  VOTE_CHOICE_TYPE,
+  type VoteSelections,
   type ElectoralLocation,
 } from "../election/types.ts";
 import { startSelectionSession, type SelectionSession } from "../selection/session.ts";
@@ -33,8 +34,15 @@ function completeSession(location: ElectoralLocation): {
     }),
   );
   const selections = Object.fromEntries(
-    session.slots.map((slot) => [slot.id, `fixture-${slot.id}`]),
-  ) as CandidateSelections;
+    session.slots.map((slot) => [
+      slot.id,
+      {
+        type: VOTE_CHOICE_TYPE.CANDIDATE,
+        candidateId: `fixture-${slot.id}`,
+        office: slot.office,
+      },
+    ]),
+  ) as VoteSelections;
 
   return { session: { ...session, selections }, candidates };
 }
@@ -79,9 +87,9 @@ describe("composição do modelo da colinha", () => {
     });
     const model = composeColinhaModel(session, candidates);
 
-    expect(model.rows.slice(2, 4).map(({ slotId, candidate }) => [
+    expect(model.rows.slice(2, 4).map(({ slotId, choice }) => [
       slotId,
-      candidate?.id,
+      choice?.type === VOTE_CHOICE_TYPE.CANDIDATE ? choice.id : undefined,
     ])).toEqual([
       ["SENATOR:1", "fixture-SENATOR:1"],
       ["SENATOR:2", "fixture-SENATOR:2"],
@@ -108,7 +116,11 @@ describe("composição do modelo da colinha", () => {
     });
     const model = composeColinhaModel(session, candidates);
 
-    expect(model.rows[4]?.candidate?.photoPath).toBeNull();
+    const choice = model.rows[4]?.choice;
+    expect(choice?.type).toBe(VOTE_CHOICE_TYPE.CANDIDATE);
+    if (choice?.type === VOTE_CHOICE_TYPE.CANDIDATE) {
+      expect(choice.photoPath).toBeNull();
+    }
   });
 
   it("representa escolha ausente ou incompatível como posição vazia", () => {
@@ -128,8 +140,8 @@ describe("composição do modelo da colinha", () => {
       wrongOfficeCandidates,
     );
 
-    expect(model.rows[0]?.candidate).toBeNull();
-    expect(model.rows[2]?.candidate).toBeNull();
+    expect(model.rows[0]?.choice).toBeNull();
+    expect(model.rows[2]?.choice).toBeNull();
   });
 
   it("não compõe uma candidatura não exibível no PNG", () => {
@@ -145,7 +157,7 @@ describe("composição do modelo da colinha", () => {
 
     const model = composeColinhaModel(session, unavailableCandidates);
 
-    expect(model.rows[5]?.candidate).toBeNull();
+    expect(model.rows[5]?.choice).toBeNull();
   });
 
   it("sinaliza candidatura pendente e mantém posições não preenchidas", () => {
@@ -164,14 +176,108 @@ describe("composição do modelo da colinha", () => {
     const model = composeColinhaModel(
       {
         ...session,
-        selections: { "SENATOR:1": "fixture-SENATOR:1" },
+        selections: {
+          "SENATOR:1": {
+            type: VOTE_CHOICE_TYPE.CANDIDATE,
+            candidateId: "fixture-SENATOR:1",
+            office: ELECTORAL_OFFICE.SENATOR,
+          },
+        },
       },
       pendingCandidates,
     );
 
     expect(model.electionLocationLabel).toContain("Maranhão (MA)");
-    expect(model.rows[2]?.candidate?.pendingOrAmbiguous).toBe(true);
-    expect(model.rows.filter(({ candidate }) => candidate === null)).toHaveLength(5);
+    const pendingChoice = model.rows[2]?.choice;
+    expect(
+      pendingChoice?.type === VOTE_CHOICE_TYPE.CANDIDATE &&
+        pendingChoice.pendingOrAmbiguous,
+    ).toBe(true);
+    expect(model.rows.filter(({ choice }) => choice === null)).toHaveLength(5);
+  });
+
+  it("omite posições não preenchidas somente quando solicitado para o PNG", () => {
+    const { session, candidates } = completeSession({
+      scope: TERRITORIAL_SCOPE.STATE,
+      uf: "SP",
+    });
+    const partialSession = {
+      ...session,
+      selections: {
+        "PRESIDENT:1": session.selections["PRESIDENT:1"]!,
+      },
+    };
+
+    const completeLayout = composeColinhaModel(partialSession, candidates);
+    const filledOnly = composeColinhaModel(partialSession, candidates, {
+      omitEmptyRows: true,
+    });
+
+    expect(completeLayout.rows).toHaveLength(6);
+    expect(filledOnly.rows).toHaveLength(1);
+    expect(filledOnly.rows[0]).toMatchObject({
+      slotId: "PRESIDENT:1",
+      order: 6,
+      choice: { type: VOTE_CHOICE_TYPE.CANDIDATE },
+    });
+  });
+
+  it("compõe candidato, legenda, branco e nulo como escolhas distintas", () => {
+    const { session, candidates } = completeSession({
+      scope: TERRITORIAL_SCOPE.STATE,
+      uf: "SP",
+    });
+    const model = composeColinhaModel(
+      {
+        ...session,
+        selections: {
+          "FEDERAL_DEPUTY:1": {
+            type: VOTE_CHOICE_TYPE.PARTY,
+            party: "ABC",
+            partyNumber: "13",
+          },
+          "STATE_DEPUTY:1": { type: VOTE_CHOICE_TYPE.BLANK },
+          "GOVERNOR:1": { type: VOTE_CHOICE_TYPE.NULL },
+          "PRESIDENT:1": {
+            type: VOTE_CHOICE_TYPE.CANDIDATE,
+            candidateId: "fixture-PRESIDENT:1",
+            office: ELECTORAL_OFFICE.PRESIDENT,
+          },
+        },
+      },
+      candidates,
+    );
+
+    expect(model.rows[0]?.choice).toEqual({
+      type: VOTE_CHOICE_TYPE.PARTY,
+      party: "ABC",
+      partyNumber: "13",
+    });
+    expect(model.rows[1]?.choice).toEqual({ type: VOTE_CHOICE_TYPE.BLANK });
+    expect(model.rows[4]?.choice).toEqual({ type: VOTE_CHOICE_TYPE.NULL });
+    expect(model.rows[5]?.choice?.type).toBe(VOTE_CHOICE_TYPE.CANDIDATE);
+  });
+
+  it("não aceita legenda forjada em cargo majoritário", () => {
+    const { session, candidates } = completeSession({
+      scope: TERRITORIAL_SCOPE.STATE,
+      uf: "SP",
+    });
+    const model = composeColinhaModel(
+      {
+        ...session,
+        selections: {
+          "PRESIDENT:1": {
+            type: VOTE_CHOICE_TYPE.PARTY,
+            party: "ABC",
+            partyNumber: "13",
+          },
+        },
+      },
+      candidates,
+    );
+
+    expect(model.rows[5]?.choice).toBeNull();
   });
 
   it("rejeita data inválida de atualização", () => {

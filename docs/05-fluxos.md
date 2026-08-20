@@ -70,7 +70,9 @@ flowchart LR
     F --> G[Guardar seleção somente em memória]
 ```
 
-A busca ignora caixa e acentos. Cada termo textual precisa ser prefixo de alguma palavra do nome de urna; a consulta numérica precisa ser prefixo do número eleitoral. A lista mostra no máximo 20 resultados depois de filtrar toda a coleção, em ordem determinística.
+A busca ignora caixa e acentos. Cada termo textual precisa ser prefixo de alguma palavra do nome de urna; a consulta numérica precisa ser prefixo do número eleitoral. Ao focar a busca ou usar o filtro, um painel flutuante mostra os primeiros 20 resultados em ordem determinística, sem aumentar a página. Busca e filtro de partido funcionam juntos; “Mostrar mais” acrescenta até 20 resultados por ação.
+
+Além de candidatura, o slot aceita branco e nulo. Nos cargos proporcionais de 2026 — Deputado Federal e Deputado Estadual ou Distrital — também aceita legenda extraída dos próprios candidatos carregados.
 
 ## 5. Fluxo específico de 2026
 
@@ -99,11 +101,13 @@ flowchart TD
 
 1. usuário abre a revisão;
 2. aplicação ordena os slots conforme a configuração eleitoral;
-3. para cada slot preenchido, compõe cargo, fotografia, número, nome e partido;
-4. a partir de uma escolha, posições não preenchidas permanecem claramente marcadas como `Não preenchido`;
+3. para cada slot preenchido, compõe candidatura, legenda, branco ou nulo conforme o tipo explícito da escolha;
+4. a partir de uma escolha, posições não preenchidas permanecem marcadas como `Não preenchido`, salvo quando o usuário ativa a opção de gerar a imagem somente com escolhas preenchidas;
 5. composição é renderizada localmente;
 6. um único comando gera e inicia o download; um link manual aparece somente se o navegador bloquear esse início;
 7. nenhuma requisição com o conteúdo da colinha é feita.
+
+Quando Web Share com arquivos está disponível, a mesma composição vira um `File` PNG mantido somente em memória. Depois de preparada, uma segunda ação explícita abre imediatamente o menu nativo, respeitando a ativação exigida pelo navegador. Sem suporte, o usuário baixa o arquivo; cancelamento do menu não é tratado como falha.
 
 ## 8. Alteração da circunscrição
 

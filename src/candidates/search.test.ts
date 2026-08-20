@@ -4,6 +4,7 @@ import { ELECTORAL_OFFICE, TERRITORIAL_SCOPE } from "../election/types.ts";
 import { CANDIDATE_STATUS, type Candidate } from "./model.ts";
 import {
   MAX_VISIBLE_CANDIDATE_RESULTS,
+  candidatePartyOptions,
   searchCandidates,
   visibleCandidateSearchResults,
 } from "./search.ts";
@@ -132,10 +133,39 @@ describe("busca local de candidatos", () => {
       ballotName: `Pessoa ${index}`,
     }));
 
-    const result = visibleCandidateSearchResults(manyCandidates, "pes");
+    const result = visibleCandidateSearchResults(manyCandidates, "");
 
     expect(result.total).toBe(24);
     expect(result.candidates).toHaveLength(MAX_VISIBLE_CANDIDATE_RESULTS);
+    expect(result.hasMore).toBe(true);
+    expect(
+      visibleCandidateSearchResults(
+        manyCandidates,
+        "",
+        null,
+        MAX_VISIBLE_CANDIDATE_RESULTS * 2,
+      ).candidates,
+    ).toHaveLength(24);
+  });
+
+  it("combina busca textual e filtro de partido", () => {
+    expect(searchCandidates(candidates, "", "TST").map(({ id }) => id)).toEqual([
+      "fixture-10",
+      "fixture-carlos",
+      "fixture-luiza",
+    ]);
+    expect(searchCandidates(candidates, "lu", "TST").map(({ id }) => id)).toEqual([
+      "fixture-luiza",
+    ]);
+    expect(searchCandidates(candidates, "lu", "EXM")).toEqual([]);
+  });
+
+  it("extrai partidos e números dos próprios candidatos em ordem determinística", () => {
+    expect(candidatePartyOptions(candidates)).toEqual([
+      { party: "DEV", partyNumber: "30" },
+      { party: "EXM", partyNumber: "20" },
+      { party: "TST", partyNumber: "10" },
+    ]);
   });
 
   it("apresenta candidaturas pendentes para seleção", () => {

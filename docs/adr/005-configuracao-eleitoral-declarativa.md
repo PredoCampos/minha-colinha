@@ -8,7 +8,9 @@ Eleições brasileiras seguem ciclos regulares, mas cargos, quantidades e regras
 
 ## Decisão
 
-Cada eleição suportada terá configuração versionada que declara cargos, ordem, quantidade de escolhas, escopo territorial e exceções.
+Cada eleição suportada terá configuração versionada que declara rodadas, datas, cargos, ordem, quantidade e tipos permitidos de escolha, escopo territorial e exceções.
+
+Uma rodada futura pode ter data conhecida e disputas ainda não configuradas. Em 2026, isso representa o eventual segundo turno sem inferir automaticamente quais cargos continuarão.
 
 O ano atual apenas seleciona uma configuração existente; ele não inventa uma eleição.
 
