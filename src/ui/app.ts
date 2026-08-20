@@ -27,6 +27,7 @@ import {
   type VotingSlotId,
 } from "../election/types.ts";
 import { STATE_NAMES, STATE_OPTIONS } from "../location/states.ts";
+import { detectStateFromGeolocation } from "../location/geolocation.ts";
 import {
   changeSelectionLocation,
   selectCandidateInSession,
@@ -42,6 +43,10 @@ interface ApplicationState {
   metadata: CandidateSnapshotMetadata | null;
   metadataStatus: "loading" | "ready" | "error" | "not-applicable";
   metadataError: string | null;
+  locationDetectionStatus: "idle" | "requesting" | "suggested" | "error";
+  suggestedUf: FederativeUnit | null;
+  locationDetectionError: string | null;
+  locationDetectionVersion: number;
   files: ReadonlyMap<ElectoralOffice, CandidateFile>;
   errors: ReadonlyMap<ElectoralOffice, Error>;
   selectionErrors: ReadonlyMap<VotingSlotId, string>;
@@ -504,6 +509,168 @@ async function loadOfficialMetadata(
   render();
 }
 
+function resetLocationDetection(state: ApplicationState): void {
+  state.locationDetectionVersion += 1;
+  state.locationDetectionStatus = "idle";
+  state.suggestedUf = null;
+  state.locationDetectionError = null;
+}
+
+function canApplyStateChoice(
+  state: ApplicationState,
+  uf: FederativeUnit,
+): boolean {
+  const currentUf =
+    state.session?.location.scope === TERRITORIAL_SCOPE.STATE
+      ? state.session.location.uf
+      : undefined;
+  return (
+    currentUf === uf ||
+    !state.session ||
+    !hasSelections(state.session) ||
+    window.confirm("Alterar a UF apagará as escolhas atuais. Deseja continuar?")
+  );
+}
+
+async function requestLocationSuggestion(
+  state: ApplicationState,
+  render: () => void,
+): Promise<void> {
+  state.locationDetectionVersion += 1;
+  const requestVersion = state.locationDetectionVersion;
+  state.locationDetectionStatus = "requesting";
+  state.suggestedUf = null;
+  state.locationDetectionError = null;
+  state.announcement = "Solicitando sua localização ao navegador.";
+  render();
+
+  try {
+    const uf = await detectStateFromGeolocation();
+    if (requestVersion !== state.locationDetectionVersion) {
+      return;
+    }
+    state.locationDetectionStatus = "suggested";
+    state.suggestedUf = uf;
+    state.announcement = `${STATE_NAMES[uf]} foi sugerido. Confirme antes de aplicar.`;
+  } catch (error) {
+    if (requestVersion !== state.locationDetectionVersion) {
+      return;
+    }
+    state.locationDetectionStatus = "error";
+    state.suggestedUf = null;
+    state.locationDetectionError =
+      error instanceof Error
+        ? error.message
+        : "Não foi possível determinar sua UF. Selecione-a manualmente.";
+    state.announcement = state.locationDetectionError;
+  }
+  render();
+  focusAfterRender("location-assistance");
+}
+
+function createGeolocationOption(
+  state: ApplicationState,
+  render: () => void,
+): HTMLElement {
+  const section = element("div", "geolocation-option");
+  section.id = "location-assistance";
+  section.tabIndex = -1;
+  section.setAttribute("aria-live", "polite");
+  section.append(
+    element("p", "optional-label", "Opcional"),
+    element(
+      "p",
+      "geolocation-description",
+      "Se preferir, o navegador pode sugerir sua UF. A seleção manual acima continua disponível.",
+    ),
+  );
+
+  const privacy = element(
+    "p",
+    "geolocation-privacy",
+    "As coordenadas são comparadas localmente com limites do IBGE, não são enviadas a serviços externos e não são armazenadas.",
+  );
+  privacy.id = "geolocation-privacy";
+  const locate = element(
+    "button",
+    "secondary-button geolocation-button",
+    state.locationDetectionStatus === "requesting"
+      ? "Obtendo localização…"
+      : "Usar minha localização",
+  );
+  locate.type = "button";
+  locate.disabled = state.locationDetectionStatus === "requesting";
+  locate.setAttribute("aria-describedby", privacy.id);
+  locate.addEventListener("click", () => {
+    void requestLocationSuggestion(state, render);
+  });
+  section.append(locate, privacy);
+
+  if (state.locationDetectionStatus === "suggested" && state.suggestedUf) {
+    const suggestion = element("div", "location-suggestion");
+    const title = element(
+      "strong",
+      undefined,
+      `UF sugerida: ${STATE_NAMES[state.suggestedUf]} (${state.suggestedUf})`,
+    );
+    const explanation = element(
+      "p",
+      undefined,
+      "Confirme apenas se esta for a UF do seu domicílio eleitoral.",
+    );
+    const actions = element("div", "location-suggestion-actions");
+    const confirm = element(
+      "button",
+      "primary-button",
+      `Confirmar ${state.suggestedUf}`,
+    );
+    confirm.type = "button";
+    confirm.addEventListener("click", () => {
+      const suggestedUf = state.suggestedUf;
+      if (!suggestedUf || !canApplyStateChoice(state, suggestedUf)) {
+        return;
+      }
+      const currentUf =
+        state.session?.location.scope === TERRITORIAL_SCOPE.STATE
+          ? state.session.location.uf
+          : undefined;
+      resetLocationDetection(state);
+      if (currentUf === suggestedUf) {
+        state.announcement = `${STATE_NAMES[suggestedUf]} já é a UF selecionada.`;
+        render();
+        return;
+      }
+      void selectState(state, suggestedUf, render);
+    });
+    const reject = element(
+      "button",
+      "text-button",
+      "Escolher outra UF manualmente",
+    );
+    reject.type = "button";
+    reject.addEventListener("click", () => {
+      resetLocationDetection(state);
+      state.announcement = "Sugestão descartada. Escolha sua UF manualmente.";
+      render();
+      focusAfterRender("voting-state");
+    });
+    actions.append(confirm, reject);
+    suggestion.append(title, explanation, actions);
+    section.append(suggestion);
+  }
+
+  if (state.locationDetectionStatus === "error" && state.locationDetectionError) {
+    const error = element(
+      "p",
+      "geolocation-error",
+      state.locationDetectionError,
+    );
+    error.setAttribute("role", "alert");
+    section.append(error);
+  }
+  return section;
+}
+
 function createLocationForm(
   state: ApplicationState,
   render: () => void,
@@ -549,26 +716,26 @@ function createLocationForm(
   );
   submit.type = "submit";
   controls.append(select, submit);
-  form.append(label, hint, controls);
+  form.append(label, hint, controls, createGeolocationOption(state, render));
 
   form.addEventListener("submit", (event) => {
     event.preventDefault();
     const selectedState = STATE_OPTIONS.find(({ uf }) => uf === select.value);
-    if (!selectedState || selectedState.uf === currentUf) {
+    if (!selectedState) {
+      return;
+    }
+    if (selectedState.uf === currentUf) {
+      resetLocationDetection(state);
+      render();
       return;
     }
 
-    if (
-      state.session &&
-      hasSelections(state.session) &&
-      !window.confirm(
-        "Alterar a UF apagará as escolhas atuais. Deseja continuar?",
-      )
-    ) {
+    if (!canApplyStateChoice(state, selectedState.uf)) {
       select.value = currentUf ?? "";
       return;
     }
 
+    resetLocationDetection(state);
     void selectState(state, selectedState.uf, render);
   });
   return form;
@@ -1011,6 +1178,10 @@ export function mountApplication(
         ? "loading"
         : "not-applicable",
     metadataError: null,
+    locationDetectionStatus: "idle",
+    suggestedUf: null,
+    locationDetectionError: null,
+    locationDetectionVersion: 0,
     files: new Map(),
     errors: new Map(),
     selectionErrors: new Map(),

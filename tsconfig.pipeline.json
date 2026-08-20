@@ -8,6 +8,7 @@
     "noEmit": true
   },
   "include": [
+    "scripts/geography/**/*.ts",
     "scripts/tse/**/*.ts",
     "src/candidates/model.ts",
     "src/candidates/office-paths.ts",

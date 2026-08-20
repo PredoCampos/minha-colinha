@@ -12,7 +12,8 @@
     "test": "vitest run",
     "check": "npm run typecheck && npm run lint && npm run test && npm run build",
     "data:tse:compile": "tsc -p tsconfig.pipeline.build.json",
-    "data:tse": "npm run data:tse:compile && node .tmp/tse-pipeline-build/scripts/tse/run.js"
+    "data:tse": "npm run data:tse:compile && node .tmp/tse-pipeline-build/scripts/tse/run.js",
+    "data:geography": "npm run data:tse:compile && node .tmp/tse-pipeline-build/scripts/geography/update-state-boundaries.js"
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",

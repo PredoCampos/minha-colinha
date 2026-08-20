@@ -146,6 +146,8 @@ Estratégia recomendada:
 
 As malhas oficiais do IBGE são fonte adequada para derivar esses artefatos. A versão de origem e o processo de simplificação devem ser rastreáveis.
 
+Para 2026, `public/geography/ibge-uf-minimum.json` contém as 27 geometrias retornadas pelo serviço oficial de Malhas Geográficas do IBGE na qualidade mínima. O arquivo tem proveniência e hash da resposta original, é servido pela mesma origem da SPA e só é carregado após a pessoa acionar a geolocalização. O resolvedor point-in-polygon aceita `Polygon` e `MultiPolygon`, podendo ser reutilizado futuramente com uma partição municipal sem introduzir essa malha maior no fluxo de 2026.
+
 ## 5. Caminho do visitante
 
 ```mermaid

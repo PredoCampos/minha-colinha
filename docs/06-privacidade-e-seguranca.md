@@ -88,6 +88,8 @@ município
 
 As malhas podem ser derivadas da Malha Municipal Digital do IBGE e simplificadas no pipeline para uso web.
 
+Na implementação de 2026, a malha mínima das UFs fica em arquivo estático local e só é requisitada depois do clique em “Usar minha localização”. A aplicação mantém latitude e longitude apenas dentro da operação assíncrona que resolve a UF; seu resultado público contém somente a sigla estadual. A sugestão precisa de confirmação e qualquer erro retorna ao formulário manual sem fallback remoto.
+
 ### UX de segurança
 
 - geolocalização é opt-in;

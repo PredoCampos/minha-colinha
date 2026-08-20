@@ -65,6 +65,12 @@ Para ZIPs oficiais já baixados, use `npm run data:tse -- --input-dir <diretóri
 
 A SPA usa esse snapshot oficial como fonte padrão em runtime: lê os metadados de procedência, baixa somente os cinco arquivos de candidatos necessários para a UF escolhida (quatro estaduais e Presidente em `BR`) e carrega fotos locais sob demanda. As fixtures em `public/data/development-fixtures/` exigem ativação explícita em código de desenvolvimento ou teste e são removidas do build de produção.
 
+## Geolocalização opcional
+
+A escolha manual de UF é o fluxo principal. Após ação explícita, a aplicação pode solicitar a Geolocation API e comparar as coordenadas localmente com uma malha estadual mínima derivada do IBGE. Apenas a UF sugerida permanece no estado da interface; ela precisa ser confirmada antes do carregamento de candidatos. Nenhuma coordenada é enviada a serviço de mapas, geocodificação ou IP.
+
+O artefato `public/geography/ibge-uf-minimum.json` é versionado, registra URL, obtenção e SHA-256 da resposta oficial e pode ser reproduzido com `npm run data:geography`.
+
 ## Referências oficiais principais
 
 - TSE — Candidatos 2026: https://dadosabertos.tse.jus.br/dataset/candidatos-2026
