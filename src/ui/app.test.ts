@@ -107,10 +107,6 @@ async function mountSpSession(): Promise<HTMLElement> {
   document.body.append(container);
   mountApplication(container, 2026, CANDIDATE_DATASET_KIND.DEVELOPMENT_FIXTURE);
 
-  // O modal "Sobre" abre automaticamente ao montar; fechá-lo aqui mantém os
-  // demais testes focados no fluxo avaliado (o modal em si é o teste 3.5).
-  container.querySelector<HTMLDialogElement>(".about-dialog")?.close();
-
   const select = container.querySelector<HTMLSelectElement>("#voting-state");
   if (!select) {
     throw new Error("Seletor de UF não encontrado.");
@@ -127,6 +123,18 @@ async function mountSpSession(): Promise<HTMLElement> {
   });
 
   return container;
+}
+
+function expectNoImperativeScrollLock(): void {
+  expect(document.documentElement.style.overflow).toBe("");
+  expect(document.documentElement.style.overscrollBehavior).toBe("");
+  expect(document.body.style.position).toBe("");
+  expect(document.body.style.overflow).toBe("");
+  expect(document.body.style.top).toBe("");
+  expect(document.body.style.left).toBe("");
+  expect(document.body.style.width).toBe("");
+  expect(document.body.style.overscrollBehavior).toBe("");
+  expect(document.body.style.paddingRight).toBe("");
 }
 
 beforeEach(() => {
@@ -263,23 +271,52 @@ describe("integração da UI (app.ts)", () => {
     expect(container.querySelector('[data-office="GOVERNOR"] .selected-candidate')).toBeNull();
   });
 
-  it("modal Sobre: abre com o scroll de fundo bloqueado e restaura ao fechar", () => {
+  it("modal Sobre: inicia fechado e permanece sem lock imperativo após ciclos e novo render", async () => {
     const container = document.createElement("div");
     document.body.append(container);
     mountApplication(container, 2026, CANDIDATE_DATASET_KIND.DEVELOPMENT_FIXTURE);
 
-    const dialog = container.querySelector<HTMLDialogElement>(".about-dialog");
-    if (!dialog) {
+    const initialDialog = container.querySelector<HTMLDialogElement>(".about-dialog");
+    if (!initialDialog) {
       throw new Error("Modal Sobre não encontrado.");
     }
 
-    expect(dialog.open).toBe(true);
-    expect(document.documentElement.style.overflow).toBe("hidden");
+    expect(initialDialog.open).toBe(false);
+    expectNoImperativeScrollLock();
 
-    dialog.querySelector<HTMLButtonElement>(".dialog-close")?.click();
+    container.querySelector<HTMLButtonElement>("#about-button")?.click();
 
-    expect(dialog.open).toBe(false);
-    expect(document.documentElement.style.overflow).not.toBe("hidden");
+    const firstOpenDialog = container.querySelector<HTMLDialogElement>(".about-dialog");
+    expect(firstOpenDialog?.open).toBe(true);
+    firstOpenDialog?.querySelector<HTMLButtonElement>(".dialog-close")?.click();
+
+    expect(firstOpenDialog?.open).toBe(false);
+    expectNoImperativeScrollLock();
+
+    container.querySelector<HTMLButtonElement>("#about-button")?.click();
+
+    const secondOpenDialog = container.querySelector<HTMLDialogElement>(".about-dialog");
+    expect(secondOpenDialog?.open).toBe(true);
+    secondOpenDialog?.querySelector<HTMLButtonElement>(".dialog-close")?.click();
+
+    expect(secondOpenDialog?.open).toBe(false);
+    expectNoImperativeScrollLock();
+
+    const select = container.querySelector<HTMLSelectElement>("#voting-state");
+    if (!select) {
+      throw new Error("Seletor de UF não encontrado.");
+    }
+    select.value = "SP";
+    select
+      .closest("form")
+      ?.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
+
+    await vi.waitFor(() => {
+      const renderedDialog = container.querySelector<HTMLDialogElement>(".about-dialog");
+      expect(renderedDialog?.open).toBe(false);
+      expect(container.querySelector("#search-federal_deputy-1")).not.toBeNull();
+    });
+    expectNoImperativeScrollLock();
   });
 
   it("exportação: fica disponível assim que a colinha tem ao menos uma escolha preenchida", async () => {

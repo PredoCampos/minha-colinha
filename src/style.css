@@ -14,6 +14,16 @@
 
 html {
   scroll-padding-top: 7.5rem;
+  scrollbar-gutter: stable;
+}
+
+html:has(.about-dialog[open]) {
+  overflow: hidden;
+  overscroll-behavior: none;
+}
+
+html:has(.about-dialog[open]) body {
+  overscroll-behavior: none;
 }
 
 body {

@@ -80,7 +80,6 @@ interface ApplicationState {
   aboutOpen: boolean;
   locationEditing: boolean;
   renderCleanups: Set<() => void>;
-  dialogScrollUnlock: (() => void) | null;
 }
 
 function element<K extends keyof HTMLElementTagNameMap>(
@@ -96,44 +95,6 @@ function element<K extends keyof HTMLElementTagNameMap>(
     node.textContent = text;
   }
   return node;
-}
-
-function lockDocumentScroll(): () => void {
-  const scrollX = window.scrollX;
-  const scrollY = window.scrollY;
-  const body = document.body;
-  const root = document.documentElement;
-  const previousBodyStyle = body.getAttribute("style");
-  const previousRootStyle = root.getAttribute("style");
-  const scrollbarWidth = Math.max(0, window.innerWidth - root.clientWidth);
-
-  root.style.overflow = "hidden";
-  root.style.overscrollBehavior = "none";
-  body.style.position = "fixed";
-  body.style.top = `-${scrollY}px`;
-  body.style.left = `-${scrollX}px`;
-  body.style.width = "100%";
-  body.style.overflow = "hidden";
-  body.style.overscrollBehavior = "none";
-  if (scrollbarWidth > 0) {
-    body.style.paddingRight = `${scrollbarWidth}px`;
-  }
-
-  let released = false;
-  return () => {
-    if (released) return;
-    released = true;
-    if (previousBodyStyle === null) body.removeAttribute("style");
-    else body.setAttribute("style", previousBodyStyle);
-    if (previousRootStyle === null) root.removeAttribute("style");
-    else root.setAttribute("style", previousRootStyle);
-    window.scrollTo(scrollX, scrollY);
-  };
-}
-
-function releaseDialogScroll(state: ApplicationState): void {
-  state.dialogScrollUnlock?.();
-  state.dialogScrollUnlock = null;
 }
 
 function createHeader(
@@ -234,7 +195,6 @@ function createAboutDialog(
   }
   dialog.append(content);
   dialog.addEventListener("close", () => {
-    releaseDialogScroll(state);
     state.aboutOpen = false;
     requestAnimationFrame(() => document.getElementById("about-button")?.focus());
   });
@@ -1733,7 +1693,6 @@ function renderConfiguredApplication(
   root: HTMLElement,
   state: ApplicationState,
 ): void {
-  releaseDialogScroll(state);
   for (const cleanup of state.renderCleanups) cleanup();
   state.renderCleanups.clear();
   const render = () => renderConfiguredApplication(root, state);
@@ -1824,7 +1783,6 @@ function renderConfiguredApplication(
   );
   if (state.aboutOpen && !dialog.open) {
     dialog.showModal();
-    state.dialogScrollUnlock = lockDocumentScroll();
   }
 }
 
@@ -1872,10 +1830,9 @@ export function mountApplication(
     preparedShare: null,
     shareMessage: null,
     exportOnlyFilled: false,
-    aboutOpen: true,
+    aboutOpen: false,
     locationEditing: true,
     renderCleanups: new Set(),
-    dialogScrollUnlock: null,
   };
   window.addEventListener(
     "beforeunload",
