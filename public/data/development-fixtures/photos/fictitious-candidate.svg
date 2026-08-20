@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 400" role="img" aria-labelledby="title description">
+  <title id="title">Imagem de candidato fictício</title>
+  <desc id="description">Arte de desenvolvimento, sem representar uma pessoa real.</desc>
+  <rect width="320" height="400" fill="#e5e3da" />
+  <circle cx="160" cy="140" r="72" fill="#a9b5ac" />
+  <path d="M48 360c8-92 53-138 112-138s104 46 112 138" fill="#819589" />
+  <rect x="24" y="318" width="272" height="58" rx="10" fill="#173f2d" />
+  <text x="160" y="354" fill="#fff" font-family="system-ui, sans-serif" font-size="22" font-weight="700" text-anchor="middle">DADO FICTÍCIO</text>
+</svg>

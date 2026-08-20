@@ -1,0 +1,766 @@
+:root {
+  color: #18231d;
+  background: #f4f3ed;
+  font-family:
+    Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    sans-serif;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-padding-top: 7.5rem;
+}
+
+body {
+  min-width: 20rem;
+  min-height: 100vh;
+  margin: 0;
+}
+
+button,
+input,
+select {
+  font: inherit;
+}
+
+button,
+select,
+input {
+  min-height: 2.75rem;
+}
+
+button {
+  cursor: pointer;
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+a {
+  color: inherit;
+}
+
+.skip-link {
+  position: fixed;
+  z-index: 30;
+  top: 0.75rem;
+  left: 0.75rem;
+  padding: 0.75rem 1rem;
+  border-radius: 0.5rem;
+  color: #fff;
+  background: #173f2d;
+  transform: translateY(-200%);
+}
+
+.skip-link:focus {
+  transform: translateY(0);
+}
+
+#app {
+  display: grid;
+  min-height: 100vh;
+  grid-template-rows: auto 1fr auto;
+}
+
+.site-header {
+  position: sticky;
+  z-index: 20;
+  top: 0;
+  border-bottom: 1px solid #d6d8d1;
+  background: rgb(250 249 244 / 96%);
+  backdrop-filter: blur(0.5rem);
+}
+
+.site-header-inner,
+.page,
+.site-footer {
+  width: min(100% - 2rem, 68rem);
+  margin-inline: auto;
+}
+
+.site-header-inner {
+  display: flex;
+  min-height: 3.75rem;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.brand {
+  color: #173f2d;
+  font-size: 1.12rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  text-decoration: none;
+}
+
+.project-identity {
+  display: none;
+  color: #5b675f;
+  font-size: 0.8rem;
+}
+
+.development-bar {
+  padding: 0.38rem 1rem;
+  color: #4b3119;
+  background: #ffe6b7;
+  font-size: 0.72rem;
+  line-height: 1.35;
+  text-align: center;
+}
+
+.page {
+  padding-block: clamp(2.25rem, 7vw, 5rem) 5rem;
+}
+
+.intro {
+  max-width: 50rem;
+  margin-bottom: clamp(2.5rem, 7vw, 4.5rem);
+}
+
+.eyebrow,
+.step-label {
+  margin: 0 0 0.6rem;
+  color: #35644f;
+  font-size: 0.76rem;
+  font-weight: 800;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+
+h1,
+h2,
+p {
+  margin-top: 0;
+}
+
+h1 {
+  max-width: 14ch;
+  margin-bottom: 1rem;
+  font-size: clamp(2.5rem, 9vw, 5rem);
+  line-height: 0.98;
+  letter-spacing: -0.05em;
+}
+
+.lead {
+  max-width: 43rem;
+  margin-bottom: 1.25rem;
+  color: #435148;
+  font-size: clamp(1.05rem, 2.6vw, 1.25rem);
+  line-height: 1.55;
+}
+
+.intro-benefits {
+  display: grid;
+  gap: 0.55rem;
+  margin: 0 0 1.5rem;
+  padding: 0;
+  color: #33483c;
+  list-style: none;
+}
+
+.intro-benefits li {
+  position: relative;
+  padding-left: 1.65rem;
+  line-height: 1.45;
+}
+
+.intro-benefits li::before {
+  position: absolute;
+  left: 0;
+  color: #35644f;
+  content: "✓";
+  font-weight: 800;
+}
+
+.fixture-notice {
+  padding: 1rem;
+  border: 1px solid #d58a43;
+  border-radius: 0.65rem;
+  color: #4c321c;
+  background: #fff3dc;
+  font-size: 0.92rem;
+  line-height: 1.5;
+}
+
+.location-section {
+  max-width: 46rem;
+  margin-bottom: 4rem;
+  padding: 1.25rem;
+  border: 1px solid #d0d4cc;
+  border-radius: 0.85rem;
+  background: #fffef9;
+  box-shadow: 0 0.5rem 2rem rgb(31 45 36 / 5%);
+}
+
+.location-section h2,
+.slots-header h2,
+.review > h2 {
+  margin-bottom: 0.45rem;
+  font-size: clamp(1.45rem, 4vw, 2rem);
+  letter-spacing: -0.025em;
+}
+
+.location-form label,
+.search-label {
+  display: block;
+  margin-bottom: 0.35rem;
+  font-weight: 750;
+}
+
+.field-hint {
+  margin-bottom: 0.8rem;
+  color: #5a675f;
+  font-size: 0.9rem;
+  line-height: 1.45;
+}
+
+.location-controls {
+  display: grid;
+  gap: 0.75rem;
+}
+
+select,
+.candidate-search {
+  width: 100%;
+  border: 1px solid #748178;
+  border-radius: 0.55rem;
+  color: #17211b;
+  background: #fff;
+}
+
+select {
+  padding-inline: 0.8rem;
+}
+
+.candidate-search {
+  padding: 0.7rem 0.8rem;
+}
+
+.primary-button,
+.select-candidate,
+.secondary-button,
+.text-button {
+  border-radius: 0.5rem;
+  font-weight: 750;
+}
+
+.primary-button,
+.select-candidate {
+  border: 1px solid #173f2d;
+  color: #fff;
+  background: #173f2d;
+}
+
+.primary-button {
+  padding: 0.7rem 1.2rem;
+}
+
+.secondary-button {
+  border: 1px solid #35644f;
+  color: #234b38;
+  background: #fff;
+}
+
+.text-button {
+  min-height: 2.5rem;
+  padding: 0.4rem 0.7rem;
+  border: 0;
+  color: #24533c;
+  background: transparent;
+  text-decoration: underline;
+  text-underline-offset: 0.18em;
+}
+
+.slots-header {
+  position: relative;
+  margin-bottom: 1.35rem;
+}
+
+.slots-header > p:not(.step-label) {
+  margin-bottom: 0;
+  color: #59665e;
+}
+
+.choices-count {
+  margin-top: 0.45rem;
+  color: #27523e !important;
+  font-size: 0.88rem;
+  font-weight: 750;
+}
+
+.slots {
+  display: grid;
+  gap: 1.25rem;
+}
+
+.slot {
+  min-width: 0;
+  padding: 1.25rem;
+  border: 1px solid #cfd4cc;
+  border-radius: 0.85rem;
+  background: #fffef9;
+  box-shadow: 0 0.35rem 1.4rem rgb(31 45 36 / 4%);
+}
+
+.slot[data-office="SENATOR"] {
+  border-left: 0.3rem solid #637d70;
+}
+
+.slot-title {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin-bottom: 1.25rem;
+  font-size: clamp(1.25rem, 4vw, 1.55rem);
+  letter-spacing: -0.015em;
+}
+
+.slot-order {
+  color: #68736c;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.075em;
+  text-transform: uppercase;
+}
+
+.selected-candidate,
+.candidate-card {
+  display: grid;
+  grid-template-columns: 4.6rem minmax(0, 1fr);
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.selected-candidate {
+  margin-bottom: 1.25rem;
+  padding: 0.8rem;
+  border: 2px solid #35644f;
+  border-radius: 0.65rem;
+  background: #eef6f0;
+}
+
+.selected-candidate .candidate-photo {
+  grid-row: 1 / 3;
+}
+
+.selected-label {
+  grid-column: 2;
+  color: #27523e;
+  font-size: 0.76rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.change-choice {
+  grid-column: 1 / -1;
+  padding: 0.55rem 0.9rem;
+}
+
+.candidate-photo {
+  display: grid;
+  width: 4.6rem;
+  aspect-ratio: 4 / 5;
+  place-items: center;
+  overflow: hidden;
+  border-radius: 0.45rem;
+  color: #536057;
+  background: #e5e3da;
+  font-size: 0.65rem;
+  text-align: center;
+}
+
+.candidate-photo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.candidate-details {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 0.18rem;
+}
+
+.candidate-number {
+  color: #123b27;
+  font-size: clamp(2rem, 8vw, 2.65rem);
+  font-variant-numeric: tabular-nums;
+  line-height: 0.95;
+  letter-spacing: 0.015em;
+}
+
+.candidate-name {
+  overflow-wrap: anywhere;
+  font-weight: 800;
+}
+
+.candidate-party {
+  color: #536057;
+  font-size: 0.88rem;
+}
+
+.candidate-search {
+  margin-bottom: 0.75rem;
+}
+
+.candidate-results {
+  display: grid;
+  gap: 0.75rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.candidate-card {
+  padding: 0.8rem;
+  border: 1px solid #d2d6cf;
+  border-radius: 0.65rem;
+  background: #fff;
+}
+
+.select-candidate {
+  grid-column: 1 / -1;
+  padding: 0.62rem 1rem;
+}
+
+.retry-button {
+  margin-top: 0.75rem;
+  padding-inline: 1rem;
+}
+
+.loading-state,
+.empty-state,
+.error-state {
+  margin-bottom: 0;
+  padding: 0.85rem;
+  border-radius: 0.5rem;
+  line-height: 1.45;
+}
+
+.loading-state,
+.empty-state {
+  color: #536057;
+  background: #eeeee9;
+}
+
+.loading-state::before {
+  display: inline-block;
+  margin-right: 0.5rem;
+  content: "";
+  width: 0.75rem;
+  height: 0.75rem;
+  border: 2px solid #aeb8b1;
+  border-top-color: #35644f;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+.error-state {
+  color: #6f241d;
+  background: #fdebe8;
+}
+
+.review {
+  margin-top: clamp(3.5rem, 9vw, 6rem);
+  padding: 1.25rem;
+  border-radius: 0.9rem;
+  color: #eef6f0;
+  background: #173f2d;
+}
+
+.review .step-label {
+  color: #b9d3c4;
+}
+
+.review-description {
+  max-width: 42rem;
+  color: #d2dfd7;
+  line-height: 1.5;
+}
+
+.progress-label {
+  display: block;
+  margin-bottom: 0.4rem;
+  color: #dce7e0;
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.selection-progress {
+  width: 100%;
+  height: 0.7rem;
+  margin-bottom: 1.5rem;
+  accent-color: #e6b675;
+}
+
+.review-list {
+  display: grid;
+  gap: 0.65rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.review-item {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.7rem;
+  align-items: center;
+  padding: 0.85rem;
+  border: 1px solid rgb(255 255 255 / 16%);
+  border-radius: 0.65rem;
+  background: rgb(255 255 255 / 7%);
+}
+
+.review-office {
+  display: flex;
+  grid-column: 1 / -1;
+  gap: 0.65rem;
+  align-items: center;
+}
+
+.review-order {
+  display: grid;
+  width: 1.65rem;
+  height: 1.65rem;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: 50%;
+  color: #173f2d;
+  background: #dbe9df;
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.review-candidate {
+  display: grid;
+  grid-template-columns: 3.25rem minmax(0, 1fr);
+  gap: 0.65rem;
+  align-items: center;
+}
+
+.review-candidate .candidate-photo {
+  width: 3.25rem;
+}
+
+.review-candidate .candidate-number {
+  color: #fff;
+  font-size: 1.7rem;
+}
+
+.review-candidate .candidate-party,
+.review-empty {
+  color: #c9d8cf;
+}
+
+.review-empty {
+  margin-bottom: 0;
+  font-size: 0.88rem;
+  line-height: 1.4;
+}
+
+.review .text-button {
+  color: #fff1d8;
+}
+
+.review-ready,
+.review-pending,
+.review-fixture-reminder {
+  margin-bottom: 0;
+  line-height: 1.5;
+}
+
+.review-ready,
+.review-pending {
+  margin-top: 1.25rem;
+  padding: 0.85rem;
+  border-radius: 0.5rem;
+}
+
+.review-ready {
+  color: #173f2d;
+  background: #dbe9df;
+}
+
+.review-pending {
+  color: #4c321c;
+  background: #ffe8bd;
+}
+
+.review-fixture-reminder {
+  margin-top: 0.8rem;
+  color: #ffddb0;
+  font-size: 0.78rem;
+}
+
+.export-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: center;
+  margin-top: 1.25rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid rgb(255 255 255 / 18%);
+}
+
+.export-actions .primary-button,
+.export-actions .secondary-button {
+  min-height: 3rem;
+  padding: 0.72rem 1.15rem;
+}
+
+.export-actions .primary-button {
+  border-color: #ffe3ad;
+  color: #3f2b17;
+  background: #ffe3ad;
+}
+
+.export-actions .secondary-button {
+  border-color: #dbe9df;
+  color: #fff;
+  background: transparent;
+}
+
+.download-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+}
+
+.export-success,
+.export-generating,
+.export-hint {
+  flex-basis: 100%;
+  margin-bottom: 0;
+  line-height: 1.45;
+}
+
+.export-success {
+  color: #dbe9df;
+  font-weight: 700;
+}
+
+.export-generating,
+.export-hint {
+  color: #c9d8cf;
+  font-size: 0.86rem;
+}
+
+.site-footer {
+  padding-block: 1.75rem;
+  border-top: 1px solid #d8d7d0;
+  color: #5c665f;
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+:focus-visible {
+  outline: 0.2rem solid #d27431;
+  outline-offset: 0.18rem;
+}
+
+button:hover {
+  filter: brightness(0.95);
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (min-width: 40rem) {
+  .project-identity {
+    display: inline;
+  }
+
+  .location-controls {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .candidate-card {
+    grid-template-columns: 4.6rem minmax(0, 1fr) auto;
+  }
+
+  .select-candidate {
+    grid-column: auto;
+    padding-inline: 1.2rem;
+  }
+
+  .selected-candidate {
+    grid-template-columns: 4.6rem minmax(0, 1fr) auto;
+  }
+
+  .selected-candidate .candidate-details,
+  .selected-label {
+    grid-column: 2;
+  }
+
+  .change-choice {
+    grid-column: 3;
+    grid-row: 1 / 3;
+    padding-inline: 1rem;
+  }
+
+  .review {
+    padding: 1.75rem;
+  }
+}
+
+@media (min-width: 48rem) {
+  .site-header-inner,
+  .page,
+  .site-footer {
+    width: min(100% - 4rem, 68rem);
+  }
+
+  .location-section,
+  .slot {
+    padding: 1.6rem;
+  }
+
+  .slots {
+    max-width: 54rem;
+  }
+
+  .review-item {
+    grid-template-columns: minmax(13rem, 0.8fr) minmax(14rem, 1.2fr) auto;
+  }
+
+  .review-office {
+    grid-column: auto;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}

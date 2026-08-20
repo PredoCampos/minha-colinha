@@ -1,0 +1,32 @@
+{
+  "schemaVersion": 1,
+  "datasetKind": "DEVELOPMENT_FIXTURE",
+  "notice": "DADOS FICTÍCIOS PARA DESENVOLVIMENTO — NÃO SÃO DADOS OFICIAIS DO TSE.",
+  "electionYear": 2026,
+  "office": "FEDERAL_DEPUTY",
+  "partition": { "scope": "STATE", "uf": "SP" },
+  "candidates": [
+    {
+      "id": "fixture-2026-sp-federal-deputy-01",
+      "electionYear": 2026,
+      "office": "FEDERAL_DEPUTY",
+      "number": "1010",
+      "ballotName": "EXEMPLO FEDERAL A",
+      "party": "EXM",
+      "photoPath": "data/development-fixtures/photos/fictitious-candidate.svg",
+      "status": "DISPLAYABLE",
+      "jurisdiction": { "scope": "STATE", "uf": "SP" }
+    },
+    {
+      "id": "fixture-2026-sp-federal-deputy-02",
+      "electionYear": 2026,
+      "office": "FEDERAL_DEPUTY",
+      "number": "2020",
+      "ballotName": "EXEMPLO FEDERAL B",
+      "party": "TST",
+      "photoPath": "data/development-fixtures/photos/fictitious-candidate.svg",
+      "status": "DISPLAYABLE",
+      "jurisdiction": { "scope": "STATE", "uf": "SP" }
+    }
+  ]
+}

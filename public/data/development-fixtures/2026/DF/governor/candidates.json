@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "datasetKind": "DEVELOPMENT_FIXTURE",
+  "notice": "DADOS FICTÍCIOS PARA DESENVOLVIMENTO — NÃO SÃO DADOS OFICIAIS DO TSE.",
+  "electionYear": 2026,
+  "office": "GOVERNOR",
+  "partition": { "scope": "STATE", "uf": "DF" },
+  "candidates": [
+    {
+      "id": "fixture-2026-df-governor-01",
+      "electionYear": 2026,
+      "office": "GOVERNOR",
+      "number": "30",
+      "ballotName": "EXEMPLO GOVERNO DF",
+      "party": "TST",
+      "photoPath": null,
+      "status": "DISPLAYABLE",
+      "jurisdiction": { "scope": "STATE", "uf": "DF" }
+    }
+  ]
+}

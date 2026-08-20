@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "datasetKind": "DEVELOPMENT_FIXTURE",
+  "notice": "DADOS FICTÍCIOS PARA DESENVOLVIMENTO — NÃO SÃO DADOS OFICIAIS DO TSE.",
+  "electionYear": 2026,
+  "office": "STATE_DEPUTY",
+  "partition": { "scope": "STATE", "uf": "SP" },
+  "candidates": [
+    {
+      "id": "fixture-2026-sp-state-deputy-01",
+      "electionYear": 2026,
+      "office": "STATE_DEPUTY",
+      "number": "30303",
+      "ballotName": "EXEMPLO ESTADUAL",
+      "party": "EXM",
+      "photoPath": "data/development-fixtures/photos/fictitious-candidate.svg",
+      "status": "DISPLAYABLE",
+      "jurisdiction": { "scope": "STATE", "uf": "SP" }
+    }
+  ]
+}

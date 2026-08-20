@@ -1,0 +1,32 @@
+{
+  "schemaVersion": 1,
+  "datasetKind": "DEVELOPMENT_FIXTURE",
+  "notice": "DADOS FICTÍCIOS PARA DESENVOLVIMENTO — NÃO SÃO DADOS OFICIAIS DO TSE.",
+  "electionYear": 2026,
+  "office": "SENATOR",
+  "partition": { "scope": "STATE", "uf": "SP" },
+  "candidates": [
+    {
+      "id": "fixture-2026-sp-senator-01",
+      "electionYear": 2026,
+      "office": "SENATOR",
+      "number": "100",
+      "ballotName": "EXEMPLO SENADO A",
+      "party": "EXM",
+      "photoPath": "data/development-fixtures/photos/fictitious-candidate.svg",
+      "status": "DISPLAYABLE",
+      "jurisdiction": { "scope": "STATE", "uf": "SP" }
+    },
+    {
+      "id": "fixture-2026-sp-senator-02",
+      "electionYear": 2026,
+      "office": "SENATOR",
+      "number": "200",
+      "ballotName": "EXEMPLO SENADO B",
+      "party": "TST",
+      "photoPath": "data/development-fixtures/photos/fictitious-candidate.svg",
+      "status": "DISPLAYABLE",
+      "jurisdiction": { "scope": "STATE", "uf": "SP" }
+    }
+  ]
+}

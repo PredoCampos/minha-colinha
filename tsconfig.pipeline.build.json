@@ -1,0 +1,10 @@
+{
+  "extends": "./tsconfig.pipeline.json",
+  "compilerOptions": {
+    "noEmit": false,
+    "outDir": ".tmp/tse-pipeline-build",
+    "rootDir": ".",
+    "rewriteRelativeImportExtensions": true
+  },
+  "exclude": ["src/**/*.test.ts", "scripts/**/*.test.ts"]
+}

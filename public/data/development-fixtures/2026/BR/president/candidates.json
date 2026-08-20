@@ -1,0 +1,32 @@
+{
+  "schemaVersion": 1,
+  "datasetKind": "DEVELOPMENT_FIXTURE",
+  "notice": "DADOS FICTÍCIOS PARA DESENVOLVIMENTO — NÃO SÃO DADOS OFICIAIS DO TSE.",
+  "electionYear": 2026,
+  "office": "PRESIDENT",
+  "partition": { "scope": "NATIONAL" },
+  "candidates": [
+    {
+      "id": "fixture-2026-br-president-01",
+      "electionYear": 2026,
+      "office": "PRESIDENT",
+      "number": "10",
+      "ballotName": "PESSOA FICTÍCIA A",
+      "party": "EXM",
+      "photoPath": "data/development-fixtures/photos/fictitious-candidate.svg",
+      "status": "DISPLAYABLE",
+      "jurisdiction": { "scope": "NATIONAL" }
+    },
+    {
+      "id": "fixture-2026-br-president-02",
+      "electionYear": 2026,
+      "office": "PRESIDENT",
+      "number": "20",
+      "ballotName": "PESSOA FICTÍCIA B",
+      "party": "TST",
+      "photoPath": "data/development-fixtures/photos/fictitious-candidate.svg",
+      "status": "DISPLAYABLE",
+      "jurisdiction": { "scope": "NATIONAL" }
+    }
+  ]
+}

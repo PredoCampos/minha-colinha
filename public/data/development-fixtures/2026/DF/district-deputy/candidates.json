@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "datasetKind": "DEVELOPMENT_FIXTURE",
+  "notice": "DADOS FICTÍCIOS PARA DESENVOLVIMENTO — NÃO SÃO DADOS OFICIAIS DO TSE.",
+  "electionYear": 2026,
+  "office": "DISTRICT_DEPUTY",
+  "partition": { "scope": "STATE", "uf": "DF" },
+  "candidates": [
+    {
+      "id": "fixture-2026-df-district-deputy-01",
+      "electionYear": 2026,
+      "office": "DISTRICT_DEPUTY",
+      "number": "40404",
+      "ballotName": "EXEMPLO DISTRITAL",
+      "party": "TST",
+      "photoPath": "data/development-fixtures/photos/fictitious-candidate.svg",
+      "status": "DISPLAYABLE",
+      "jurisdiction": { "scope": "STATE", "uf": "DF" }
+    }
+  ]
+}
