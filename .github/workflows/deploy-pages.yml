@@ -52,6 +52,8 @@ jobs:
           test -s dist/data/2026/metadata.json
           test "$(find dist/data/2026 -name candidates.json -type f | wc -l)" -eq 109
           test "$(find dist/data/2026 -name '*.jpg' -type f | wc -l)" -gt 0
+          test -s dist/geography/ibge-uf-minimum.json
+          test -s dist/ATTRIBUTIONS.txt
           test ! -e dist/data/development-fixtures
 
       - name: Configure Pages

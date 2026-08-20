@@ -1,0 +1,33 @@
+MINHA COLINHA — LICENÇA E ATRIBUIÇÕES
+
+Código
+------
+O código da Minha Colinha é distribuído sob a licença MIT. O texto integral
+está no arquivo LICENSE do repositório:
+https://github.com/PredoCampos/minha-colinha
+
+Dados eleitorais e fotografias
+-------------------------------
+Fonte: Tribunal Superior Eleitoral (TSE), Assessoria de Gestão Eleitoral
+(AGEL), conjunto “Candidatos - 2026”.
+https://dadosabertos.tse.jus.br/dataset/candidatos-2026
+
+O catálogo oficial identifica a licença do conjunto como “Creative Commons
+Atribuição”, sem explicitar uma versão. Os snapshots publicados pela Minha
+Colinha selecionam, normalizam, validam e particionam campos desse conjunto; os
+metadados de cada geração registram URLs, datas e hashes dos recursos usados.
+
+Limites estaduais
+-----------------
+Fonte: Instituto Brasileiro de Geografia e Estatística (IBGE), API de Malhas
+Geográficas, versão 3.
+https://servicodados.ibge.gov.br/api/docs/malhas?versao=3
+
+O arquivo geography/ibge-uf-minimum.json é uma transformação da malha
+simplificada por UF. O próprio arquivo registra a URL concreta da consulta, a
+data de obtenção e o SHA-256 da resposta oficial.
+
+Independência
+-------------
+A Minha Colinha é um projeto independente. O uso e a atribuição das fontes não
+implicam vínculo, endosso ou caráter oficial perante o TSE ou o IBGE.

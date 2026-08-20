@@ -1,6 +1,4 @@
-# Colinha
-
-> Nome provisório do projeto.
+# Minha Colinha
 
 Aplicação web single-page, aberta e auditável, para montar uma colinha eleitoral a partir de dados oficiais da Justiça Eleitoral e exportá-la como imagem. A aplicação não exige conta, não persiste as escolhas do usuário e não envia a colinha para um servidor de aplicação.
 
@@ -51,6 +49,18 @@ Em anos sem eleição suportada, a aplicação apenas informa que não há pleit
 - [07 — Pipeline TSE 2026](docs/07-pipeline-tse-2026.md)
 - [ADRs — decisões arquiteturais](docs/adr/README.md)
 
+## Desenvolvimento local
+
+Requer Node.js 20.19 ou mais recente. Em um clone novo:
+
+```bash
+npm ci
+npm run data:tse
+npm run dev
+```
+
+`npm run data:tse` obtém e valida o snapshot oficial necessário para exercitar o fluxo completo; se um snapshot válido já existir localmente, ele não precisa ser gerado a cada inicialização. `npm run build` cria o bundle de produção e `npm run preview` o serve localmente sob o caminho `/minha-colinha/`.
+
 ## Pipeline de dados oficiais
 
 O adaptador 2026 baixa os recursos oficiais, interpreta CSV ISO-8859-1, associa as fotos por `SQ_CANDIDATO`, normaliza para o contrato interno e só então troca o snapshot publicado:
@@ -65,6 +75,12 @@ Para ZIPs oficiais já baixados, use `npm run data:tse -- --input-dir <diretóri
 
 A SPA usa esse snapshot oficial como fonte padrão em runtime: lê os metadados de procedência, baixa somente os cinco arquivos de candidatos necessários para a UF escolhida (quatro estaduais e Presidente em `BR`) e carrega fotos locais sob demanda. As fixtures em `public/data/development-fixtures/` exigem ativação explícita em código de desenvolvimento ou teste e são removidas do build de produção.
 
+## Publicação no GitHub Pages
+
+O repositório deve usar **GitHub Actions** como fonte do Pages. Um push para `main`, o agendamento diário às 05:23 BRT ou `workflow_dispatch` inicia o mesmo fluxo atômico: instalação, obtenção e validação dos dados do TSE, checks, build, verificação do artefato e deploy. A etapa de publicação só é alcançada após todas as anteriores passarem; o workflow não possui permissão nem comandos para criar commits ou pull requests.
+
+O `base` do Vite está configurado como `/minha-colinha/`. Para outro nome de repositório, esse valor precisa ser ajustado antes da publicação.
+
 ## Geolocalização opcional
 
 A escolha manual de UF é o fluxo principal. Após ação explícita, a aplicação pode solicitar a Geolocation API e comparar as coordenadas localmente com uma malha estadual mínima derivada do IBGE. Apenas a UF sugerida permanece no estado da interface; ela precisa ser confirmada antes do carregamento de candidatos. Nenhuma coordenada é enviada a serviço de mapas, geocodificação ou IP.
@@ -78,6 +94,10 @@ O artefato `public/geography/ibge-uf-minimum.json` é versionado, registra URL, 
 - TSE — Calendário Eleitoral 2026: https://www.tse.jus.br/legislacao/compilada/res/2026/resolucao-no-23-750-de-26-de-fevereiro-de-2026
 - IBGE — Malhas Territoriais: https://www.ibge.gov.br/geociencias/organizacao-do-territorio/malhas-territoriais/15774-malhas.html
 
+## Licença e atribuições
+
+O código é distribuído sob a [licença MIT](LICENSE). Dados eleitorais, fotografias e limites territoriais mantêm suas condições de origem e não são relicenciados pela licença do código. As fontes, transformações e atribuições estão registradas em [ATTRIBUTIONS.txt](public/ATTRIBUTIONS.txt), que também acompanha o artefato publicado.
+
 ## Estado da documentação
 
-Este conjunto descreve a arquitetura e as regras pretendidas antes da implementação. Decisões técnicas que mudem garantias de privacidade, fonte de dados, persistência, neutralidade ou modelo de distribuição devem ser registradas em ADR.
+Este conjunto acompanha a arquitetura e as regras implementadas. Decisões técnicas que mudem garantias de privacidade, fonte de dados, persistência, neutralidade ou modelo de distribuição devem ser registradas em ADR.
